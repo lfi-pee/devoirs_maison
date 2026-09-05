@@ -820,11 +820,12 @@ Tout provient du dépôt **hexagonal** (agrégation France insoumise) :
   France où un « avant » et un « après » existent. Les numéros y confirment la
   renumérotation en continu à la lettre — arr. 1 : 1-10, arr. 2 : **11-20**, arr. 3 :
   **21-35**, arr. 4 : **36-49**, puis retour au local à partir du 5<sup>e</sup>. Appariés par
-  recouvrement de surface (99,9 % de recouvrement médian), les secteurs 2026 et 2022 valident
-  **39 couples sur 39** du crosswalk déduit des seuls inscrits, et l'identité pour 859 des
-  864 autres bureaux. Restent **cinq** désaccords : quatre sont des bureaux créés depuis 2022
-  (sans contour, donc déjà non peints — le recouvrement les donne à cheval sur deux ou trois
-  secteurs anciens), et **un est une vraie erreur** : le bureau `75056_1371` (13<sup>e</sup>)
+  recouvrement de surface (99,9 % de recouvrement médian, rattachement retenu au-delà de
+  90 %), les secteurs 2026 et 2022 valident **39 couples sur 39** du crosswalk déduit des
+  seuls inscrits, et l'identité pour **854 des 857** autres bureaux rattachables — sous le
+  seuil, un secteur 2026 est un bureau créé dont le territoire a été prélevé sur plusieurs
+  anciens. Restent **trois** désaccords : deux sont des bureaux créés depuis 2022 (sans
+  contour, donc déjà non peints), et **un est une vraie erreur** : le bureau `75056_1371` (13<sup>e</sup>)
   est peint sur le contour de 2022 qui porte son numéro, alors que son secteur officiel de
   2026 recouvre à **98 %** celui de l'ancien `75056_1334`. Les inscrits le disaient à demi-mot
   (1 213 en 2024 contre 1 699 en 2022, 29 % d'écart) mais l'arrondissement, jugé en bloc sur
@@ -832,7 +833,9 @@ Tout provient du dépôt **hexagonal** (agrégation France insoumise) :
   bureaux faux. **Aucun témoin disponible dans le pipeline ne peut trancher ce cas** ; seule
   la géométrie officielle le voit. Le corriger suppose d'ajouter les secteurs officiels de
   Paris comme source (Lyon en publie un millésime courant, Marseille aucun depuis 2019) — non
-  fait à ce stade, et écrit ici pour ne pas le laisser tacite.
+  fait à ce stade, et écrit ici pour ne pas le laisser tacite. La vérification est
+  rejouable : [validation_continuite.py](validation_continuite.py) télécharge les secteurs
+  officiels et réimprime ce verdict.
 - **Ce qui reste, mesuré.** Après ces traitements, **759 bureaux** (573 200 inscrit·es,
   1,1 % des codes communs) portent le même code en 2022 et en 2024 avec plus de **20 %**
   d'écart d'inscrits, dont **640** (489 424 inscrit·es) peints sur la carte — contre 1 047
