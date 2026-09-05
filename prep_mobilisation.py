@@ -203,9 +203,12 @@ def communes_2027(source: Path) -> pd.DataFrame:
 
 
 def communes_recodees(da: Path) -> set[str]:
-    """Communes dont un code de bureau ne désigne pas le même bureau selon la source qui
-    le porte — renumérotées ou redécoupées (cf. prep_elections). Fichier absent = aucune,
-    le pipeline ayant pu tourner avant que la liste ne soit écrite."""
+    """Groupes de bureaux dont un code ne désigne pas le même bureau selon la source qui le
+    porte — commune renumérotée ou redécoupée, arrondissement de PLM renuméroté en continu
+    (cf. prep_elections). Une commune y est désignée par son code, un arrondissement de PLM
+    par commune + arrondissement : la lecture passe donc par `prep_elections.est_recode`.
+    Fichier absent = aucun, le pipeline ayant pu tourner avant que la liste ne soit
+    écrite."""
     f = da / prep_elections.FICHIER_RECODEES
     return set(json.loads(f.read_text())) if f.exists() else set()
 
@@ -234,7 +237,7 @@ def texture_bv(source: Path, recodees: set[str] | None = None) -> pd.DataFrame:
         for ft in json.loads(f.read_text())["features"]:
             p = ft["properties"]
             code = str(p["l"])
-            if code.partition("_")[0] in ecartees:
+            if prep_elections.est_recode(code, ecartees):
                 continue
             insc = max(1, int(p["i"]))
             lignes.append(
@@ -352,7 +355,7 @@ def construire(source: Path, da: Path) -> tuple[pd.DataFrame, dict]:
     tex = texture_bv(source, recodees)
     if recodees:
         print(
-            f"  ↻ texture 2024 écartée dans {len(recodees)} commune(s) recodée(s) : "
+            f"  ↻ texture 2024 écartée dans {len(recodees)} groupe(s) recodé(s) : "
             "leurs bureaux portent la valeur communale 2027"
         )
 

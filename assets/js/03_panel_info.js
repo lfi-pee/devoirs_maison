@@ -197,7 +197,15 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
   const exp=expBlock;
   const sec=t=>`<div class="sec">${t}</div>`;
 
-  const lfi=o.lfi_E24!=null?o.lfi_E24:(o.lfi_L24!=null?o.lfi_L24:o.lfi_P22);
+  // Repli du chiffre de tête sur le vote LFI (cf. plus bas) : il faut nommer le scrutin
+  // RÉELLEMENT affiché. La chaîne E24 → L24 → P22 existe parce que 1 975 bureaux, 1 394
+  // quartiers et 29 communes n'ont aucune valeur aux européennes 2024 — bureau supprimé
+  // depuis le millésime des contours, ou commune détachée de ses contours (cf.
+  // prep_elections). L'intitulé, lui, disait « Europ. 2024 » dans tous les cas : le
+  // 4e arrondissement de Paris annonçait 20,2 % « aux européennes 2024 » alors que c'était
+  // sa valeur de la PRÉSIDENTIELLE 2022. Un chiffre faux, pas un chiffre absent.
+  const lfiScr=["E24","L24","P22"].find(s=>o[`lfi_${s}`]!=null);
+  const lfi=lfiScr?o[`lfi_${lfiScr}`]:null;
   let h=`<div class="t">${nom}</div>`+reperes(o)+omBanner(niveau,code);
   // Carnet de campagne (objectifs + décomposition + plan d'action) RÉSERVÉ à la commune :
   // c'est la maille d'action de référence (cf. EVOLUTIONS.md ch.3). Aux échelles d'ensemble
@@ -230,11 +238,15 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
            headEffectif(o,indicKey),
       hi[2](o)+(est?EST_METHODO:""));
   } else if(lfi!=null){
-    headline=exp(`<div class="lead">Vote LFI · Europ. 2024${est?" · estimé":""}</div>`+
+    headline=exp(`<div class="lead">Vote LFI · ${scLab(lfiScr)}${est?" · estimé":""}</div>`+
            `<div class="head">${lfi} %<small> des inscrits</small></div>`+
-           headEffectif(o,"lfi","E24"),
-      `Part des inscrits ayant voté pour la <b>liste LFI</b> aux <b>européennes de juin 2024</b> (la liste `+
-      `d'union Glucksmann/Place publique compte dans le bloc de gauche, pas ici). `+
+           headEffectif(o,"lfi",lfiScr),
+      `Part des inscrits ayant voté pour la <b>liste LFI</b> à <b>${scLab(lfiScr)}</b>`+
+      (lfiScr==="E24"?` (la liste d'union Glucksmann/Place publique compte dans le bloc de gauche, pas ici)`:"")+
+      `. `+(lfiScr!=="E24"?`Cette zone n'a pas de valeur aux <b>européennes 2024</b>, le scrutin de référence `+
+      `de la carte : son bureau a été supprimé depuis le millésime des contours, ou sa commune en a été `+
+      `détachée (un code de bureau n'y désigne plus le même territoire). Le chiffre montré est donc celui `+
+      `du scrutin nommé ci-dessus, pas un chiffre de 2024. `:"")+
       `On rapporte aux <b>inscrits</b> (et non aux votants) pour mesurer le poids réel sur le corps électoral. `+
       `Source : Ministère de l'Intérieur.`+(est?EST_METHODO:""));
   } else if(o.rev!=null){
