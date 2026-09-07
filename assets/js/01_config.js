@@ -438,7 +438,7 @@ const fmtVal=(v,u)=> (v==null||(typeof v==="number"&&isNaN(v)))?"—":(u==="€"
 // « i » (034_mobilisation.js), seul endroit où l'on apprend ce qui la fabrique.
 //
 // Aucun niveau ne dit « rien à gagner ici » : cette phrase-là n'appartient qu'au 0 de
-// l'échelle (231 zones, cf. 02_data_geo.js), et 43 % des communes tiennent sous 40. Les
+// l'échelle (231 zones, cf. 02_data_geo.js), et 44 % des communes tiennent sous 40. Les
 // mots gradués (« faible », « moyenne », « forte ») disent donc un RANG, comme la note,
 // et non un verdict de terrain — un groupe d'action lisant « pas prioritaire » chez lui
 // aurait entendu du modèle une phrase que le modèle ne prononce pas.

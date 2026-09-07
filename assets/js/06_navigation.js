@@ -153,9 +153,13 @@ function paintLayer(geo,valeurs,enter,niveau){ if(layer)layer.remove();
     // Le niveau de priorité NOMME déjà l'échelle qu'il gradue : rappeler la pastille devant
     // lui donnait « Prioritaire : Priorité forte (84 / 100) », et « Prioritaire : Priorité
     // faible » sur la moitié du pays. Le score se lit donc seul, les autres indicateurs
-    // gardant leur intitulé — « 12 % » ne dit pas de quoi sans lui.
-    const ligne=indicKey==="conquerir"?prioTxt(valOf(p))
-      :`${indicLabel} : ${fmtVal(valOf(p),indicUnit)}`;
+    // gardant leur intitulé — « 12 % » ne dit pas de quoi sans lui. Sauf QUAND IL N'Y A PAS
+    // DE NIVEAU : 2 357 communes et 1 727 bureaux n'ont pas de note (porte-à-porte non
+    // chiffrable), et l'effectif ne sort pas non plus dans ce cas (effEtiquette) — le nom
+    // de la pastille reste alors la seule chose qui dise ce que le tiret remplace.
+    const vp=valOf(p);
+    const ligne=(indicKey==="conquerir"&&vp!=null)?prioTxt(vp)
+      :`${indicLabel} : ${fmtVal(vp,indicUnit)}`;
     return `<b>${p.__nom}</b><br>${ligne}${est}`+
       effEtiquette(curVals[p.__code]); },{sticky:true});
   layer.on("mouseover",e=>{ const ly=e.layer; if(!ly||!ly.feature)return;
