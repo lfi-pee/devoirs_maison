@@ -188,6 +188,53 @@ ouvre la méthode complète, en voix par heure (légende de la carte pour la mé
 chiffre de tête de la fiche pour le calcul détaillé, avec les valeurs de la zone ouverte).
 C'est le seul chemin vers ce que la note mesure, et il est à un clic.
 
+**Le niveau écrit devant la note.** `72 / 100` situe la zone, mais à condition de savoir que
+`50` est le terrain médian : la carte, l'infobulle et le chiffre de tête écrivent donc un
+**niveau** devant le nombre, qui reste écrit derrière — « **Priorité forte** (72 / 100) ».
+Quatre paliers, choix d'**affichage** et non propriété de l'échelle, réunis dans une seule
+constante (`NIV_PRIO`, [01_config.js](assets/js/01_config.js)) que la notice du « i » relit
+pour en publier le barème (`niveauxBareme`, `niveauxNotice`) : déplacer un seuil déplace ce
+qui l'explique.
+
+| Niveau affiché | Note | Régions | Départements | Communes |
+| -------------- | ---- | ------- | ------------ | -------- |
+| **Priorité faible** | jusqu'à `40` | `17 %` | `6 %` | `43 %` |
+| **Priorité moyenne** | `41` à `60` | `61 %` | `76 %` | `42 %` |
+| **Priorité forte** | `61` à `90` | `22 %` | `18 %` | `14 %` |
+| **Priorité très forte** | au-delà de `90` | `0 %` | `0 %` | `0,7 %` |
+
+Trois points de méthode, qui sont autant de pièges :
+
+- **Le niveau se lit sur l'ENTIER AFFICHÉ**, jamais sur la valeur brute. `89,7` et `90,4`
+  s'écrivent tous deux `90 / 100` : lus brut, ils tomberaient de part et d'autre du seuil et
+  porteraient deux mots différents sous le même nombre. C'est l'argument qui fait déjà
+  afficher la note en entier (`fmtVal`), appliqué au mot.
+- **Le balisage n'entre pas dans le formateur.** `fmtVal` rend du **texte**, et le `<small>`
+  qui met la note en petit est composé par le seul appelant qui écrit du HTML (la fiche,
+  `prioHtml`). Les trois autres appels veulent du texte nu (`prioTxt`) — dont le contexte
+  joint à une suggestion, qui est échappé à l'affichage **puis envoyé par courriel**
+  ([16_suggestion.js](assets/js/16_suggestion.js)) : un `<small>` s'y lirait en clair, dans
+  le panneau comme dans le message reçu par l'équipe.
+- **Le test porte sur l'indicateur, pas sur l'unité.** `« /100 »` est un format ; la
+  prochaine note sur 100 ne serait pas pour autant une priorité. Le niveau n'est donc ajouté
+  que là où `indicKey === "conquerir"`, comme le « i » du chiffre de tête l'est déjà.
+
+L'infobulle de la carte, elle, **cesse de rappeler le nom de la pastille** devant ce
+seul indicateur : le niveau nomme déjà l'échelle qu'il gradue, et « Prioritaire : Priorité
+forte (84 / 100) » bégayait. Les autres indicateurs le gardent — « 12 % » ne dit pas de quoi
+sans lui.
+
+**Aucun palier ne dit « rien à gagner ici ».** Cette phrase n'appartient qu'au `0` de
+l'échelle (231 zones dont le gisement est exactement nul), et `43 %` des communes tiennent
+sous `40` : un groupe d'action qui lirait « pas prioritaire » chez lui entendrait du modèle
+une phrase que le modèle ne prononce pas. Les mots sont donc **gradués** (« faible »,
+« moyenne », « forte »), comme la note elle-même : ils disent un **rang**, pas un verdict de
+terrain. Deux zones du même palier ne se valent d'ailleurs pas — c'est le nombre entre
+parenthèses qui les départage, et il est toujours écrit. Le palier haut n'est enfin
+atteignable qu'à la **commune** et au **bureau de vote** : aucun département ni région ne
+passe `83` (La Réunion, Seine-Saint-Denis), ce qui est la même information que l'agrégation
+elle-même — une commune moyenne ses bons et ses mauvais terrains, un département plus encore.
+
 **Pourquoi la médiane à 50, et pas une simple règle de trois sur le maximum.** Parce que la
 distribution est très dissymétrique : rapporté au seul maximum, le terrain médian notait
 `14`, la moitié des communes tenait entre `9` et `17`, et la note n'utilisait pas son
