@@ -198,10 +198,15 @@ qui l'explique.
 
 | Niveau affiché | Note | Régions | Départements | Communes |
 | -------------- | ---- | ------- | ------------ | -------- |
-| **Priorité faible** | jusqu'à `40` | `17 %` | `6 %` | `43 %` |
-| **Priorité moyenne** | `41` à `60` | `61 %` | `76 %` | `42 %` |
-| **Priorité forte** | `61` à `90` | `22 %` | `18 %` | `14 %` |
-| **Priorité très forte** | au-delà de `90` | `0 %` | `0 %` | `0,7 %` |
+| **Priorité faible** | jusqu'à `40` | `17 %` | `6 %` | `44 %` |
+| **Priorité moyenne** | `41` à `60` | `61 %` | `79 %` | `42 %` |
+| **Priorité forte** | `61` à `90` | `22 %` | `15 %` | `13 %` |
+| **Priorité très forte** | au-delà de `90` | `0 %` | `0 %` | `0,6 %` |
+
+Ces parts sont comptées **comme l'interface les affiche**, c'est-à-dire sur l'entier — et
+non sur la note brute, qui donnait ici trois départements de plus en « forte » (`34`, `76`
+et `84`, notés `60,07` à `60,31` et écrits `60 / 100`). Une répartition qui ne compte pas
+avec la règle qu'elle documente contredit l'écran qu'elle décrit.
 
 Trois points de méthode, qui sont autant de pièges :
 
@@ -225,7 +230,7 @@ forte (84 / 100) » bégayait. Les autres indicateurs le gardent — « 12 % » 
 sans lui.
 
 **Aucun palier ne dit « rien à gagner ici ».** Cette phrase n'appartient qu'au `0` de
-l'échelle (231 zones dont le gisement est exactement nul), et `43 %` des communes tiennent
+l'échelle (231 zones dont le gisement est exactement nul), et `44 %` des communes tiennent
 sous `40` : un groupe d'action qui lirait « pas prioritaire » chez lui entendrait du modèle
 une phrase que le modèle ne prononce pas. Les mots sont donc **gradués** (« faible »,
 « moyenne », « forte »), comme la note elle-même : ils disent un **rang**, pas un verdict de
