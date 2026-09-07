@@ -419,45 +419,46 @@ const spoiler=(titre,corps,open=false)=> !corps?"":
 // (infobulle CSS, cf. map.css) ; au CLIC, le volet méthodo de la section — le clic remonte
 // jusqu'à l'entête .exph qui l'ouvre. C'est aussi le repli tactile, où le survol n'existe pas.
 const hint=t=>`<span class="hint" data-tip="${t.replace(/"/g,"&quot;")}">i</span>`;
+// `isNaN` autant que `null` : une valeur non mesurable se lit « — », jamais « NaN% ».
+const fmtVal=(v,u)=> (v==null||(typeof v==="number"&&isNaN(v)))?"—":(u==="€"?Math.round(v).toLocaleString('fr')+" €":
+  // « /100 » : une NOTE, donc un entier — la décimale d'un rendement ne se transporte pas
+  // dans un score, et deux zones séparées d'un demi-point ne se départagent pas sur le
+  // terrain. Le rendement brut, lui, garde ses deux décimales là où il est encore écrit
+  // (volet méthodo, Carnet de campagne) : il vaut moins de 1 partout. Rien n'est plafonné :
+  // le 100 étant un repère de dispersion (médiane + 3 σ) et non le meilleur terrain, 2,3 %
+  // des bureaux s'écrivent « 105 / 100 » (Épinay-sur-Seine) ou « 220 / 100 » : l'information.
+  (u===" /100"?Math.round(v).toLocaleString('fr')+" / 100":
+  (u===" voix/h"?v.toLocaleString('fr',{minimumFractionDigits:2,maximumFractionDigits:2})+" voix/h":
+  (u===" voix"?Math.round(v).toLocaleString('fr')+" voix":v+(u||"")))));
 
-/** Affichage du niveau de priorité en fonction de la valeur brute
- * @param prio: valeur de priorité
- * @return un "niveau de priorité" en français
-*/
-function niveauPrio(prio) {
-  if (prio > 90) return "Très prioritaire";
-  else if (prio > 60) return "Prioritaire";
-  else if (prio > 40) return "Peu prioritaire";
-  else return "Pas prioritaire";
-}
-
-/** Formatage de la valeur affichée
-  *@param v: valeur
-  *@param u: unité
-  *@return: la valeur formatée prête pour affichage
-*/
-const fmtVal = (v, u) => {
-  // `isNaN` autant que `null` : une valeur non mesurable se lit « — », jamais « NaN% ».
-  if (v == null || typeof v === "number" && isNaN(v)) return "—";
-  else {
-    if (u === "€") return Math.round(v).toLocaleString('fr')+" €";
-    else if (u === " /100") {
-      // « /100 » : une NOTE, donc un entier — la décimale d'un rendement ne se transporte pas
-      // dans un score, et deux zones séparées d'un demi-point ne se départagent pas sur le
-      // terrain. Le rendement brut, lui, garde ses deux décimales là où il est encore écrit
-      // (volet méthodo, Carnet de campagne) : il vaut moins de 1 partout. Rien n'est plafonné :
-      // le 100 étant un repère de dispersion (médiane + 3 σ) et non le meilleur terrain, 2,3 %
-      // des bureaux s'écrivent « 105 / 100 » (Épinay-sur-Seine) ou « 220 / 100 » : l'information.
-      const niveau = niveauPrio(v);
-      const valeur = Math.round(v).toLocaleString('fr')+" / 100";
-      return `${niveau} <small>(${valeur})</small>`;
-    }
-    else if (u === " voix/h")
-      return v.toLocaleString('fr',{minimumFractionDigits:2,maximumFractionDigits:2})+" voix/h";
-    else if (u === " voix") return Math.round(v).toLocaleString('fr')+" voix";
-    else return v + ( u || "");
-  }
-}
+// ── Le NIVEAU de priorité, mot posé sur la note ─────────────────────────────────────
+// « 72 / 100 » situe une zone parmi les bureaux du pays, mais ne dit pas quoi en faire :
+// le lecteur doit savoir d'abord que 50 est le terrain médian pour lire le 72. Le mot le
+// dit avant le nombre, qui reste écrit derrière — la note, elle, garde son barème et son
+// « i » (034_mobilisation.js), seul endroit où l'on apprend ce qui la fabrique.
+//
+// Aucun niveau ne dit « rien à gagner ici » : cette phrase-là n'appartient qu'au 0 de
+// l'échelle (231 zones, cf. 02_data_geo.js), et 43 % des communes tiennent sous 40. Les
+// mots gradués (« faible », « moyenne », « forte ») disent donc un RANG, comme la note,
+// et non un verdict de terrain — un groupe d'action lisant « pas prioritaire » chez lui
+// aurait entendu du modèle une phrase que le modèle ne prononce pas.
+//
+// Les seuils sont un choix d'AFFICHAGE et non une propriété de l'échelle : ils vivent
+// donc ici, en un seul endroit, lu tel quel par le barème de la notice (niveauxBareme).
+const NIV_PRIO=[[90,"Priorité très forte"],[60,"Priorité forte"],
+                [40,"Priorité moyenne"],[0,"Priorité faible"]];
+// Le niveau se lit sur l'ENTIER AFFICHÉ, pas sur la valeur brute : une note de 90,4
+// s'écrit « 90 / 100 » comme une note de 89,7, et les deux zones ne peuvent pas porter
+// deux mots différents sous le même nombre. C'est l'argument de fmtVal, appliqué au mot.
+const niveauPrio=v=>{ const n=Math.round(v);
+  return (NIV_PRIO.find(([s])=>n>s)||NIV_PRIO[NIV_PRIO.length-1])[1]; };
+// Le niveau suivi de sa note. Deux formes, et c'est VOULU : `prioHtml` pour la fiche, qui
+// écrit la note en petit sous le mot, `prioTxt` en texte nu pour tout le reste — l'un des
+// appels est échappé puis ENVOYÉ PAR COURRIEL (contexte joint à une suggestion,
+// 16_suggestion.js), où un « <small> » se lirait tel quel dans le message reçu.
+const nonMesure=v=>v==null||(typeof v==="number"&&isNaN(v));
+const prioTxt =v=>nonMesure(v)?"—":`${niveauPrio(v)} (${fmtVal(v," /100")})`;
+const prioHtml=v=>nonMesure(v)?"—":`${niveauPrio(v)} <small>(${fmtVal(v," /100")})</small>`;
 
 // ── Les effectifs derrière les pourcentages ─────────────────────────────────────────
 // Tout le socle électoral du site est en « % des inscrits » et le socle social en « % de

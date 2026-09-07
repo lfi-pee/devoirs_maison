@@ -106,6 +106,31 @@ function noteEchelle(o){ const b=rendRep(); if(!b)return "";
       grad(100,hi,sg)+`</div>`+
     (eq?`<div class="notesceq">${eq}</div>`:"")+`</div>`; }
 
+// Les MOTS que l'interface pose sur la note (« Priorité forte »…) sont ce qu'on lit avant
+// le nombre, sur la carte comme en tête de fiche : ils doivent donc être définis quelque
+// part, et cet endroit est celui où l'échelle est déjà dessinée. Les bornes sont lues dans
+// NIV_PRIO (01_config.js) et non recopiées : déplacer un seuil déplace le barème avec lui.
+// Le bas part de 0 et non de 1 — c'est le plancher de l'échelle, pas un seuil de plus.
+const niveauxBareme=()=>{ const n=NIV_PRIO.length;
+  return NIV_PRIO.map(([s,lab],i)=>
+    i===0    ? `<b>${lab}</b> au-delà de ${_n0(s)}`
+    : i===n-1? `<b>${lab}</b> jusqu'à ${_n0(NIV_PRIO[i-1][0])}`
+    :          `<b>${lab}</b> de ${_n0(s+1)} à ${_n0(NIV_PRIO[i-1][0])}`)
+    .reverse().join(" · "); };
+// Le paragraphe qui les définit, ÉCRIT UNE FOIS pour les deux notices — celle de la fiche
+// (rendMethodo, avec la zone ouverte) et celle de la légende (mobResume, sans zone), qui
+// est la seule que puisse atteindre un lecteur n'ayant encore rien cliqué : les mots de
+// l'infobulle s'y expliquent donc aussi.
+const niveauxNotice=note=>
+  `<p><b>Les mots posés sur la note.</b> La carte, l'infobulle et le chiffre de tête `+
+  `écrivent la note derrière un <b>niveau</b>${note!=null?` — ici « ${niveauPrio(note)} »`:""} : `+
+  `${niveauxBareme()}. Ces quatre paliers sont un choix d'<b>affichage</b>, destiné à rendre `+
+  `le nombre lisible sans connaître l'échelle ; ils ne changent rien au calcul, et le `+
+  `<b>rang</b> reste celui de la note — deux zones du même palier ne se valent pas, c'est le `+
+  `nombre entre parenthèses qui les départage. Un niveau « faible » dit que le terrain `+
+  `rapporte moins qu'ailleurs, jamais qu'il n'y a rien à y gagner : cela, seul le <b>0</b> `+
+  `le dit.</p>`;
+
 // --- Rentabilité du porte-à-porte ---------------------------------------------------
 // La ressource rare d'une campagne est l'HEURE de militant·e, pas la voix théorique. On
 // divise donc le gisement par le temps qu'il coûte à aller chercher, porte après porte.
@@ -151,6 +176,7 @@ function rendMethodo(o){ o=o||{};
     `reconquérir, le <b>50</b> le bureau <b>médian</b> de France, et le <b>100</b> `+
     `${r.rendement_sigmas!=null?`<b>${_n0(r.rendement_sigmas)} écarts-types</b>`:"deux écarts-types"} `+
     `au-dessus de lui, en interpolant de part et d'autre du médian.</p>`+
+    niveauxNotice(note)+
     `<p><b>Pourquoi le 100 n'est pas le meilleur terrain de France</b> — parce qu'il est `+
     `seul. Le meilleur bureau du pays${r.rendement_max!=null?` (${_n3(r.rendement_max)} voix/h)`:""} `+
     `est 21 % au-dessus du deuxième et 57 % au-dessus du 999<sup>e</sup> millième : `+
@@ -262,7 +288,7 @@ function mobResume(){ const r=mobRef(), ech=noteEchelle(null);
     `il n'y a rien à reconquérir, <b>50</b> au bureau médian de France, <b>100</b> `+
     `${r.rendement_sigmas!=null?`à ${_n0(r.rendement_sigmas)} écarts-types`:"deux écarts-types"} `+
     `au-dessus de lui. Un rendement en voix par heure ne se classe pas sans savoir d'abord ce `+
-    `qu'est une bonne valeur ; une note se situe seule.</p>`+ech+
+    `qu'est une bonne valeur ; une note se situe seule.</p>`+ech+niveauxNotice(null)+
     `<p>La note interpole de part et d'autre du médian, en deux segments de droite de pentes `+
     `proches. Le 100 est un repère de <b>dispersion</b> et non le meilleur terrain du pays : `+
     `celui-ci est un bureau isolé, 21 % au-dessus du deuxième, et lui accrocher le 100 tassait `+

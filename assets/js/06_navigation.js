@@ -150,7 +150,13 @@ function paintLayer(geo,valeurs,enter,niveau){ if(layer)layer.remove();
     const est=estime(curVals[p.__code])?" <i>(estimé)</i>":"";
     // Un survol sert à comparer : le taux classe, l'effectif dit la taille. On l'ajoute
     // dès que la zone porte le registre du scrutin lu (cf. effEtiquette, 02_data_geo.js).
-    return `<b>${p.__nom}</b><br>${indicLabel} : ${fmtVal(valOf(p),indicUnit)}${est}`+
+    // Le niveau de priorité NOMME déjà l'échelle qu'il gradue : rappeler la pastille devant
+    // lui donnait « Prioritaire : Priorité forte (84 / 100) », et « Prioritaire : Priorité
+    // faible » sur la moitié du pays. Le score se lit donc seul, les autres indicateurs
+    // gardant leur intitulé — « 12 % » ne dit pas de quoi sans lui.
+    const ligne=indicKey==="conquerir"?prioTxt(valOf(p))
+      :`${indicLabel} : ${fmtVal(valOf(p),indicUnit)}`;
+    return `<b>${p.__nom}</b><br>${ligne}${est}`+
       effEtiquette(curVals[p.__code]); },{sticky:true});
   layer.on("mouseover",e=>{ const ly=e.layer; if(!ly||!ly.feature)return;
     ly.setStyle({weight:2.6,color:C.geosel});
