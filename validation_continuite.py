@@ -14,10 +14,11 @@ Lyon publie un millésime courant sans « avant », Marseille rien depuis 2019.
 
 On apparie donc les secteurs 2026 aux secteurs 2022 par RECOUVREMENT DE SURFACE, et on
 compare le résultat à ce que le crosswalk déduit des inscrits. Sortie attendue (mesurée le
-5 septembre 2026) :
+7 septembre 2026 — 903 secteurs officiels en 2026 et 899 en 2022 ; 896 des 903 trouvent un
+homologue au-delà de RECOUVREMENT_MIN, d'où les 39 + 857 ci-dessous) :
 
-    39 couples sur 39 confirmés · 859 des 864 autres bureaux confirmés à l'identique
-    5 désaccords : 4 bureaux créés depuis 2022 (sans contour, donc déjà écartés)
+    39 couples sur 39 confirmés · 854 des 857 autres bureaux confirmés à l'identique
+    3 désaccords : 2 bureaux créés depuis 2022 (sans contour, donc déjà écartés)
     et 75056_1371, dont le secteur 2026 recouvre à 98 % celui de l'ancien 75056_1334
 
 Ce dernier cas est un défaut RÉEL que le pipeline ne peut pas voir : dans un arrondissement
@@ -56,7 +57,14 @@ def _charger(annee: int) -> gpd.GeoDataFrame:
     if not f.exists():
         url = URL.format(SECTEURS[annee])
         print(f"  ↓ {url}")
-        urllib.request.urlretrieve(url, f)
+        # Télécharger À CÔTÉ, puis renommer : `urlretrieve` écrit ce que le serveur rend,
+        # transfert tronqué compris, et `if not f.exists()` ne retéléchargerait jamais. Un
+        # cache empoisonné rendrait un verdict FAUX en silence — moins de secteurs, donc
+        # moins de couples confirmés —, or ce fichier ne vaut que par la confiance qu'on
+        # peut accorder aux nombres qu'il imprime. Le renommage n'a lieu qu'au bout.
+        tmp = f.with_suffix(".part")
+        urllib.request.urlretrieve(url, tmp)
+        tmp.replace(f)
     g = gpd.read_file(f).to_crs(2154)
     g["code"] = [
         f"75056_{int(a):02d}{int(n):02d}"

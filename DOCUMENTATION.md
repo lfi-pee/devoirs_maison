@@ -782,9 +782,9 @@ Tout provient du dépôt **hexagonal** (agrégation France insoumise) :
   alignait par rang « là où les effectifs coïncident », entendu comme un **nombre de codes
   égal** des deux côtés : le 4<sup>e</sup> arrondissement comptant 14 contours et **quinze**
   codes en 2024 — les quatorze habituels plus un `0499` de 1 183 inscrit·es propre aux
-  européennes — la règle s'abstenait en bloc et ses 14 bureaux, **19 500 inscrit·es en plein
+  européennes — la règle s'abstenait en bloc et ses 14 bureaux, **19 062 inscrit·es en plein
   Paris**, restaient sans contour dans tous les scrutins récents, alors que les inscrits
-  confirment leur alignement à 2,3 % d'écart médian. L'alignement ordonné place les quatorze
+  confirment leur alignement à 1,5 % d'écart médian. L'alignement ordonné place les quatorze
   et laisse `0499` de côté, privé de contour comme n'importe quelle création. Les
   arrondissements dont la numérotation n'a pas changé ne sont pas touchés : leurs codes
   coïncident (Marseille 9<sup>e</sup> : 46 codes identiques sur 50, soit 92 % de l'électorat)

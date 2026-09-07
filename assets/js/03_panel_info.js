@@ -199,9 +199,13 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
 
   // Repli du chiffre de tête sur le vote LFI (cf. plus bas) : il faut nommer le scrutin
   // RÉELLEMENT affiché. La chaîne E24 → L24 → P22 existe parce que 1 975 bureaux, 1 394
-  // quartiers et 29 communes n'ont aucune valeur aux européennes 2024 — bureau supprimé
-  // depuis le millésime des contours, ou commune détachée de ses contours (cf.
-  // prep_elections). L'intitulé, lui, disait « Europ. 2024 » dans tous les cas : le
+  // quartiers et 29 communes n'ont aucune valeur aux européennes 2024, et pas pour la même
+  // raison : au BUREAU le contour existe mais aucune voix de 2024 ne lui parvient, son code
+  // ayant été détaché dans ce scrutin (1 861 des 1 975 sont dans une commune recodée, cf.
+  // prep_elections) ; le QUARTIER, dont la valeur est estimée sur ces bureaux-là, la perd
+  // avec eux (1 174 des 1 394) ; à la COMMUNE, c'est la zone elle-même qui ne figure pas au
+  // scrutin (25 des 29 s'arrêtent en 2022, ZZ233 comprise ; 4 existent en 2024 sans figurer
+  // aux européennes). L'intitulé, lui, disait « Europ. 2024 » dans tous les cas : le
   // 4e arrondissement de Paris annonçait 20,2 % « aux européennes 2024 » alors que c'était
   // sa valeur de la PRÉSIDENTIELLE 2022. Un chiffre faux, pas un chiffre absent.
   const lfiScr=["E24","L24","P22"].find(s=>o[`lfi_${s}`]!=null);
@@ -238,15 +242,35 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
            headEffectif(o,indicKey),
       hi[2](o)+(est?EST_METHODO:""));
   } else if(lfi!=null){
+    // POURQUOI le repli, et la raison n'est pas la même selon la maille — en nommer une
+    // seule redirait le défaut qu'on corrige ici. À la commune, la zone ne figure pas au
+    // scrutin : sur les 29 concernées, 25 s'arrêtent en 2022 — fusionnées depuis, sauf
+    // ZZ233 (Français de l'étranger, que les fichiers de 2024 ne portent pas) — et 4
+    // existent en 2024 sans figurer aux européennes ; AUCUNE n'est recodée, d'où une
+    // formule qui ne l'invoque pas. Au bureau et au quartier c'est l'inverse : le recodage
+    // y est la raison de loin la plus fréquente, sans être la seule (cf. plus haut).
+    const pourquoi=estCommune
+      ?`Cette zone ne figure pas aux <b>européennes 2024</b>, le scrutin de référence de la `+
+       `carte : commune fusionnée ou créée depuis, ou territoire que ce scrutin ne couvre pas. `
+      :`Cette zone n'a pas de valeur aux <b>européennes 2024</b>, le scrutin de référence `+
+       `de la carte : son bureau a été supprimé depuis le millésime des contours, ou sa commune en a été `+
+       `détachée (un code de bureau n'y désigne plus le même territoire). `;
     headline=exp(`<div class="lead">Vote LFI · ${scLab(lfiScr)}${est?" · estimé":""}</div>`+
            `<div class="head">${lfi} %<small> des inscrits</small></div>`+
            headEffectif(o,"lfi",lfiScr),
-      `Part des inscrits ayant voté pour la <b>liste LFI</b> à <b>${scLab(lfiScr)}</b>`+
-      (lfiScr==="E24"?` (la liste d'union Glucksmann/Place publique compte dans le bloc de gauche, pas ici)`:"")+
-      `. `+(lfiScr!=="E24"?`Cette zone n'a pas de valeur aux <b>européennes 2024</b>, le scrutin de référence `+
-      `de la carte : son bureau a été supprimé depuis le millésime des contours, ou sa commune en a été `+
-      `détachée (un code de bureau n'y désigne plus le même territoire). Le chiffre montré est donc celui `+
-      `du scrutin nommé ci-dessus, pas un chiffre de 2024. `:"")+
+      // Même définition qu'à la pastille « LFI » (HEAD_INFO.lfi, 01_config.js) : le repli
+      // sert P22 et L24, où « la liste LFI » ne veut rien dire — 2022 est une candidature,
+      // 2024 une candidature d'union que LFI conduit.
+      `Part des inscrits ayant voté <b>LFI</b> à <b>${scLab(lfiScr)}</b> : bulletin LFI, ou `+
+      `candidature d'union que LFI CONDUIT et où elle n'a pas de bulletin séparé (NUPES 2022, `+
+      `NFP 2024). Les listes d'union de la gauche que LFI soutient sans les mener comptent dans `+
+      `le bloc de gauche, pas ici. `+
+      // Accolée à « que LFI soutient », cette liste-là se lirait comme un exemple : or LFI
+      // ne l'a pas soutenue, elle lui a opposé la sienne. D'où une phrase à part.
+      (lfiScr==="E24"?`La liste Glucksmann/Place publique, à laquelle LFI opposait la sienne, `+
+      `compte dans le bloc de gauche et non ici. `:"")+
+      (lfiScr!=="E24"?pourquoi+`Le chiffre montré est donc celui du scrutin nommé `+
+      `ci-dessus, pas un chiffre de 2024. `:"")+
       `On rapporte aux <b>inscrits</b> (et non aux votants) pour mesurer le poids réel sur le corps électoral. `+
       `Source : Ministère de l'Intérieur.`+(est?EST_METHODO:""));
   } else if(o.rev!=null){
