@@ -143,10 +143,11 @@ def construire_crosswalk_plm(
     (0401…0414) et QUINZE codes en 2024 — les quatorze habituels plus un 0499 de
     1 183 inscrit·es propre aux européennes (ni les législatives 2024 ni les municipales
     2026 ne le portent). 15 ≠ 14, donc abstention totale : les 14 bureaux du 4e,
-    19 500 inscrit·es en plein Paris, restaient sans contour dans TOUS les scrutins
-    récents, alors que leur alignement par rang est confirmé par les inscrits à 2,3 %
-    d'écart médian. L'alignement ordonné place les quatorze et laisse 0499 de côté ; faute
-    de contour à lui attribuer, celui-ci en est privé comme n'importe quelle création.
+    19 062 inscrit·es en plein Paris, restaient sans contour dans TOUS les scrutins
+    récents, alors que leur alignement par rang est confirmé par les inscrits à 1,5 %
+    d'écart médian — celui que le journal ci-dessous imprime. L'alignement ordonné place
+    les quatorze et laisse 0499 de côté ; faute de contour à lui attribuer, celui-ci en
+    est privé comme n'importe quelle création.
 
     Les arrondissements où la numérotation n'a PAS changé ne sont pas touchés : leurs codes
     coïncident, la couverture y est haute (Marseille 9e : 46 codes identiques sur 50, soit
@@ -333,6 +334,21 @@ CODES_APPARIES_MIN = 5  # sous 5 codes, la PART de bureaux faux n'est pas fiable
 # (28 278 communes, dont 28 168 présumées intactes), un seuil à 15 % signalerait
 # 274 communes pour environ 194 faux positifs attendus — moins d'une commune juste sur
 # trois. Un bureau qui grandit et une commune redécoupée y sont indiscernables.
+#
+# Le seuil est un PLANCHER, pas une porte réservée aux petites communes : `_reapparier` le
+# lit pour TOUT groupe, là où l'ancienne règle exigeait cinq codes appariés avant de rien
+# conclure. Reste à dire de quel côté cela mord, et la mesure le dit :
+#   - là où l'alignement demeure possible — min(anciens, nouveaux) ≥ CROSSWALK_BV_MIN, les
+#     seuls groupes RÉAPPARIABLES —, aucun ne porte aujourd'hui entre deux et quatre codes
+#     appariés, et chaque arrondissement de PLM en a zéro, ou bien dix et plus : de ce
+#     côté-là l'extension est DORMANTE ;
+#   - elle mord là où elle est faite pour mordre, sur les groupes que l'ancienne règle
+#     écartait de tout examen. 39 d'entre eux comptent cinq bureaux ou plus en 2024 pour
+#     deux à quatre codes appariés seulement (01262 : 4 → 5 bureaux, 4 appariés). Ceux-là
+#     sont désormais JUGÉS sur la médiane sans pouvoir être réappariés — la dissymétrie
+#     voulue, réapparier AFFIRME quand détacher ne fait que RETIRER.
+# La médiane vaut ce qu'elle vaut au nombre de codes qu'on lui donne, quelle que soit la
+# taille du groupe qui les porte : le 99e centile plat, ci-dessus, est l'argument.
 CODES_MEDIANE_MIN = 2
 CROSSWALK_REF_ANCIEN = ("2022-legislatives-1", "2022-presidentielle-1")
 CROSSWALK_REF_NOUVEAU = "2024-europeenne"
