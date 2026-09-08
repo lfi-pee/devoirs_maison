@@ -483,15 +483,20 @@ def _baker_carnet(com: dict[str, dict], da: Path) -> None:
         if o is None or pd.isna(row.get("pop")):
             continue
         o["pop"] = int(float(row["pop"]))
-        pop18, part_fr = row.get("pop18"), row.get("part_fr")
+        pop18 = row.get("pop18")
+        # `part_fr18` (NAT1, cf. prep_admin) est la part de nationalité française parmi les
+        # MAJEUR·ES ; `part_fr`, mesurée sur toute la population, n'est plus qu'un repli
+        # pour les communes que NAT1 ne couvre pas.
+        part_fr = row.get("part_fr18")
+        if part_fr is None or pd.isna(part_fr):
+            part_fr = row.get("part_fr")
         ins = o.get(f"insc_{CLE_REGISTRE}")
         if ins is None or pd.isna(pop18) or pd.isna(part_fr):
             continue
         # Corps électoral POTENTIEL de la commune : les majeur·es qui pourraient être
-        # inscrit·es ici. `part_fr` est mesurée sur toute la population : les étranger·es
-        # étant plus adultes que la moyenne, on sur-corrige légèrement — biais compensé en
-        # sens inverse par les ressortissant·es de l'UE, comptés dans `inscrits` aux
-        # européennes via la liste complémentaire. Les deux sont de l'ordre du point.
+        # inscrit·es ici. Reste un biais en sens inverse, non mesuré : les ressortissant·es
+        # de l'UE sont comptés dans `inscrits` aux européennes via la liste complémentaire,
+        # alors qu'ils sortent du numérateur. Il est de l'ordre du point.
         maj = round(float(pop18) * float(part_fr) / 100)
         o["maj"] = int(maj)
         o["resinsc"] = int(maj - ins)
