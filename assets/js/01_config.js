@@ -431,6 +431,35 @@ const fmtVal=(v,u)=> (v==null||(typeof v==="number"&&isNaN(v)))?"—":(u==="€"
   (u===" voix/h"?v.toLocaleString('fr',{minimumFractionDigits:2,maximumFractionDigits:2})+" voix/h":
   (u===" voix"?Math.round(v).toLocaleString('fr')+" voix":v+(u||"")))));
 
+// ── Le NIVEAU de priorité, mot posé sur la note ─────────────────────────────────────
+// « 72 / 100 » situe une zone parmi les bureaux du pays, mais ne dit pas quoi en faire :
+// le lecteur doit savoir d'abord que 50 est le terrain médian pour lire le 72. Le mot le
+// dit avant le nombre, qui reste écrit derrière — la note, elle, garde son barème et son
+// « i » (034_mobilisation.js), seul endroit où l'on apprend ce qui la fabrique.
+//
+// Aucun niveau ne dit « rien à gagner ici » : cette phrase-là n'appartient qu'au 0 de
+// l'échelle (231 zones, cf. 02_data_geo.js), et 44 % des communes tiennent sous 40. Les
+// mots gradués (« faible », « moyenne », « forte ») disent donc un RANG, comme la note,
+// et non un verdict de terrain — un groupe d'action lisant « pas prioritaire » chez lui
+// aurait entendu du modèle une phrase que le modèle ne prononce pas.
+//
+// Les seuils sont un choix d'AFFICHAGE et non une propriété de l'échelle : ils vivent
+// donc ici, en un seul endroit, lu tel quel par le barème de la notice (niveauxBareme).
+const NIV_PRIO=[[90,"Priorité très forte"],[60,"Priorité forte"],
+                [40,"Priorité moyenne"],[0,"Priorité faible"]];
+// Le niveau se lit sur l'ENTIER AFFICHÉ, pas sur la valeur brute : une note de 90,4
+// s'écrit « 90 / 100 » comme une note de 89,7, et les deux zones ne peuvent pas porter
+// deux mots différents sous le même nombre. C'est l'argument de fmtVal, appliqué au mot.
+const niveauPrio=v=>{ const n=Math.round(v);
+  return (NIV_PRIO.find(([s])=>n>s)||NIV_PRIO[NIV_PRIO.length-1])[1]; };
+// Le niveau suivi de sa note. Deux formes, et c'est VOULU : `prioHtml` pour la fiche, qui
+// écrit la note en petit sous le mot, `prioTxt` en texte nu pour tout le reste — l'un des
+// appels est échappé puis ENVOYÉ PAR COURRIEL (contexte joint à une suggestion,
+// 16_suggestion.js), où un « <small> » se lirait tel quel dans le message reçu.
+const nonMesure=v=>v==null||(typeof v==="number"&&isNaN(v));
+const prioTxt =v=>nonMesure(v)?"—":`${niveauPrio(v)} (${fmtVal(v," /100")})`;
+const prioHtml=v=>nonMesure(v)?"—":`${niveauPrio(v)} <small>(${fmtVal(v," /100")})</small>`;
+
 // ── Les effectifs derrière les pourcentages ─────────────────────────────────────────
 // Tout le socle électoral du site est en « % des inscrits » et le socle social en « % de
 // la population » : lus seuls, ces taux ne se comparent qu'entre eux, alors qu'une

@@ -58,7 +58,11 @@ function suggContexte(){
   // La VALEUR vue est ce qui permet de rejouer le calcul : deux jeux de données servis à
   // quelques jours d'écart ne donnent pas le même nombre pour la même zone.
   const o=lastInfo?lastInfo.o:(t?t.o:null), v=o?rawVal(o,indicKey):null;
-  if(v!=null)l.push(["Valeur affichée", fmtVal(v,indicUnit==="%"?" %":indicUnit)]);
+  // TEXTE NU, et pas le balisage de la fiche : ces couples sont échappés à l'affichage
+  // (sgEsc, plus bas) puis envoyés tels quels au relais et dans le courriel de repli. Un
+  // « <small> » se lirait donc en clair, ici et dans le message reçu par l'équipe.
+  if(v!=null)l.push(["Valeur affichée", indicKey==="conquerir"?prioTxt(v)
+    :fmtVal(v,indicUnit==="%"?" %":indicUnit)]);
   l.push(["Scrutins comparés", `${selA} → ${selB}`]);
   l.push(["Permalien", location.href]);
   return l; }

@@ -188,6 +188,58 @@ ouvre la méthode complète, en voix par heure (légende de la carte pour la mé
 chiffre de tête de la fiche pour le calcul détaillé, avec les valeurs de la zone ouverte).
 C'est le seul chemin vers ce que la note mesure, et il est à un clic.
 
+**Le niveau écrit devant la note.** `72 / 100` situe la zone, mais à condition de savoir que
+`50` est le terrain médian : la carte, l'infobulle et le chiffre de tête écrivent donc un
+**niveau** devant le nombre, qui reste écrit derrière — « **Priorité forte** (72 / 100) ».
+Quatre paliers, choix d'**affichage** et non propriété de l'échelle, réunis dans une seule
+constante (`NIV_PRIO`, [01_config.js](assets/js/01_config.js)) que la notice du « i » relit
+pour en publier le barème (`niveauxBareme`, `niveauxNotice`) : déplacer un seuil déplace ce
+qui l'explique.
+
+| Niveau affiché | Note | Régions | Départements | Communes |
+| -------------- | ---- | ------- | ------------ | -------- |
+| **Priorité faible** | jusqu'à `40` | `17 %` | `6 %` | `44 %` |
+| **Priorité moyenne** | `41` à `60` | `61 %` | `79 %` | `42 %` |
+| **Priorité forte** | `61` à `90` | `22 %` | `15 %` | `13 %` |
+| **Priorité très forte** | au-delà de `90` | `0 %` | `0 %` | `0,6 %` |
+
+Ces parts sont comptées **comme l'interface les affiche**, c'est-à-dire sur l'entier — et
+non sur la note brute, qui donnait ici trois départements de plus en « forte » (`34`, `76`
+et `84`, notés `60,07` à `60,31` et écrits `60 / 100`). Une répartition qui ne compte pas
+avec la règle qu'elle documente contredit l'écran qu'elle décrit.
+
+Trois points de méthode, qui sont autant de pièges :
+
+- **Le niveau se lit sur l'ENTIER AFFICHÉ**, jamais sur la valeur brute. `89,7` et `90,4`
+  s'écrivent tous deux `90 / 100` : lus brut, ils tomberaient de part et d'autre du seuil et
+  porteraient deux mots différents sous le même nombre. C'est l'argument qui fait déjà
+  afficher la note en entier (`fmtVal`), appliqué au mot.
+- **Le balisage n'entre pas dans le formateur.** `fmtVal` rend du **texte**, et le `<small>`
+  qui met la note en petit est composé par le seul appelant qui écrit du HTML (la fiche,
+  `prioHtml`). Les trois autres appels veulent du texte nu (`prioTxt`) — dont le contexte
+  joint à une suggestion, qui est échappé à l'affichage **puis envoyé par courriel**
+  ([16_suggestion.js](assets/js/16_suggestion.js)) : un `<small>` s'y lirait en clair, dans
+  le panneau comme dans le message reçu par l'équipe.
+- **Le test porte sur l'indicateur, pas sur l'unité.** `« /100 »` est un format ; la
+  prochaine note sur 100 ne serait pas pour autant une priorité. Le niveau n'est donc ajouté
+  que là où `indicKey === "conquerir"`, comme le « i » du chiffre de tête l'est déjà.
+
+L'infobulle de la carte, elle, **cesse de rappeler le nom de la pastille** devant ce
+seul indicateur : le niveau nomme déjà l'échelle qu'il gradue, et « Prioritaire : Priorité
+forte (84 / 100) » bégayait. Les autres indicateurs le gardent — « 12 % » ne dit pas de quoi
+sans lui.
+
+**Aucun palier ne dit « rien à gagner ici ».** Cette phrase n'appartient qu'au `0` de
+l'échelle (231 zones dont le gisement est exactement nul), et `44 %` des communes tiennent
+sous `40` : un groupe d'action qui lirait « pas prioritaire » chez lui entendrait du modèle
+une phrase que le modèle ne prononce pas. Les mots sont donc **gradués** (« faible »,
+« moyenne », « forte »), comme la note elle-même : ils disent un **rang**, pas un verdict de
+terrain. Deux zones du même palier ne se valent d'ailleurs pas — c'est le nombre entre
+parenthèses qui les départage, et il est toujours écrit. Le palier haut n'est enfin
+atteignable qu'à la **commune** et au **bureau de vote** : aucun département ni région ne
+passe `83` (La Réunion, Seine-Saint-Denis), ce qui est la même information que l'agrégation
+elle-même — une commune moyenne ses bons et ses mauvais terrains, un département plus encore.
+
 **Pourquoi la médiane à 50, et pas une simple règle de trois sur le maximum.** Parce que la
 distribution est très dissymétrique : rapporté au seul maximum, le terrain médian notait
 `14`, la moitié des communes tenait entre `9` et `17`, et la note n'utilisait pas son
@@ -383,9 +435,10 @@ l'écart maximal de 48,6 à 12,3 points.
 
 Le second garde-fou existe parce que le recalage communal est un rattrapage tant que les
 bureaux sans contour sont marginaux, mais devient une extrapolation quand ils font
-l'essentiel de la commune : à Bordeaux, seuls 12 % de l'électorat sont localisables sur
-les scrutins 2024-2026 (renumérotation des bureaux), et un « résultat estimé par
-intersection » n'y serait rien d'autre que le résultat communal étalé sur la population.
+l'essentiel de la commune : à Bordeaux, seuls 12 % de l'électorat étaient localisables sur
+les scrutins 2024-2026 avant le crosswalk de renumérotation (92 % depuis), et un « résultat
+estimé par intersection » n'y serait rien d'autre que le résultat communal étalé sur la
+population.
 Le filtre est appliqué **par scrutin** : Bordeaux garde donc ses estimations 2017-2022 et
 perd 2024-2026, plutôt que tout ou rien.
 
@@ -647,11 +700,21 @@ Tout provient du dépôt **hexagonal** (agrégation France insoumise) :
   **alignement ordonné** des deux listes de bureaux, la renumérotation préservant l'ordre et
   se contentant d'intercaler les créations. Le témoin est l'écart d'**inscrits** entre le
   scrutin de référence ancien et le nouveau — indépendant des codes : 2,1 % d'écart médian à
-  Bordeaux, contre 63 à 74 % pour l'appariement par code identique. Trois garde-fous :
-  on n'intervient que sur les communes que l'appariement par code prive d'estimation,
-  l'écart médian doit rester sous 6 % (95<sup>e</sup> centile de l'écart des communes dont
-  les communes intactes). **30 communes** passent l'alignement ; Bordeaux y remonte de 12 %
-  à 97 %. Les bureaux créés depuis 2022 sont
+  Bordeaux, contre 63 à 74 % pour l'appariement par code identique. **Quatre garde-fous**,
+  dont trois jugent l'alignement en bloc et le dernier ses couples un par un :
+  on n'intervient que sur les communes que l'appariement par code prive d'estimation ;
+  l'écart médian doit rester sous 6 % (95<sup>e</sup> centile de l'écart des communes
+  intactes) ; le rattachement doit progresser, sinon on garde l'existant ; et **un couple
+  dont l'écart d'inscrits dépasse 20 %** n'est pas retenu, même dans un alignement par
+  ailleurs cohérent — le coût d'un trou laisse la programmation dynamique préférer un
+  couple à 70 % d'écart à deux bureaux orphelins, et 80 couples (68 688 inscrit·es, 31 %
+  d'écart médian) passaient ainsi. **26 communes** passent l'alignement, **507 bureaux**
+  réappariés ; Bordeaux y remonte de 12 % à 92 %.
+  Les couples que l'alignement place **sur eux-mêmes** comptent comme les autres : exclus
+  du crosswalk, ils étaient détachés avec les codes non placés — 218 bureaux
+  (198 787 inscrit·es) à 1 ou 2 % d'écart d'inscrits, que l'alignement endosse, et six
+  communes réduites à 0 % d'électorat localisé quand le journal annonçait 100 %.
+  Les bureaux créés depuis 2022 sont
   privés de contour (suffixe `+`) plutôt que laissés sur le polygone d'un homonyme, et le
   crosswalk ne s'applique qu'aux scrutins de 2024 et après — ses clés sont des codes 2022
   parfaitement valides. Là où l'alignement échoue **et** où l'identité est démentie par les
@@ -676,17 +739,115 @@ Tout provient du dépôt **hexagonal** (agrégation France insoumise) :
   hasard tombe juste une fois sur deux. Sur les communes intactes, cette part vaut 0,0 %
   jusqu'au 90<sup>e</sup> centile et 0,9 % au 95<sup>e</sup> ; le seuil est à 25 %.
 - **Ces témoins déclenchent l'examen, ils ne condamnent pas.** L'alignement ordonné est tenté
-  d'abord, et il répare **30 communes (401 bureaux)** — dont Bordeaux, Sarreguemines et
+  d'abord, et il répare **26 communes (507 bureaux)** — dont Bordeaux, Sarreguemines et
   Le Creusot. Le gain de rattachement n'y est pas exigé : une commune dont tous les codes
   coïncident est déjà à 100 % de couverture et aucun alignement, même parfait, ne la ferait
   progresser ; la preuve est alors la **cohérence** de l'alignement (écart sous le seuil des
-  communes intactes). Là où aucun alignement ne tient — **101 communes, 1 469 bureaux** —
+  communes intactes). Là où aucun alignement ne tient — **248 communes, 1 982 bureaux** —
   les bureaux récents sont **privés de contour** : Port-de-Bouc passe de 13 à 14 bureaux mais
   son décalage n'est pas une simple insertion, et l'on ne fait pas correspondre 11 bureaux
   fusionnés à 17 polygones. Ces communes perdent le détail infra-communal de 2024 et 2026
   (carte des bureaux, estimation par quartier) plutôt que de le porter faux ; leurs totaux
   communaux, départementaux et régionaux ne changent pas d'un iota — ils ne passent pas par
-  le bureau.
+  le bureau (vérifié : les quatre tables d'agrégats sont identiques ligne pour ligne avant
+  et après ce traitement, et les scrutins de 2012 à 2022 le sont au bureau près).
+- **L'examen ne s'arrête pas aux grandes communes.** Le seuil sous lequel l'alignement n'a
+  plus de structure à exploiter (5 bureaux) écartait aussi les **32 896 communes de moins de
+  cinq bureaux**, 20,6 M d'inscrit·es, de tout **examen** — alors que le redécoupage d'une
+  commune de quatre bureaux se lit aussi bien que celui d'une commune de quarante. Les deux
+  décisions n'ont pas la même charge de preuve : réapparier **affirme** une correspondance
+  (qu'un alignement sur trois bureaux peut trouver par chance), détacher ne fait que
+  **retirer** une affirmation que le témoin dément. La médiane des écarts d'inscrits se lit
+  donc dès **deux** codes appariés, avec le même seuil calibré sur la même population : sur
+  les 4 471 petites communes présumées intactes (jeu de codes identique **et** nombre de
+  bureaux inchangé), l'écart médian vaut 2,0 % en médiane, 5,8 % au 95<sup>e</sup> centile et
+  12,9 % au 99<sup>e</sup> — 15 % reste au-delà du 99<sup>e</sup> centile des saines.
+  **147 communes** s'y ajoutent (400 codes appariés, 345 000 inscrit·es), avec la même
+  signature qu'aux grandes échelles : **+33 % de bureaux en médiane pour +1,7 % d'électorat**,
+  quand les intactes gagnent 1,2 % d'électorat à nombre de bureaux constant. 38479 fusionne
+  quatre bureaux en deux (256 % d'écart médian), 71118 six en quatre (65 %). Le coût assumé
+  est de **0,8 % de faux positifs** sur la population intacte — le standard déjà retenu pour
+  les grandes communes. La **part de bureaux franchement faux**, elle, ne descend pas si bas :
+  à deux ou quatre codes appariés, un seul bureau en fait 25 à 50 %, et le seuil de 25 %
+  condamnerait 1 % des communes intactes sur un unique écart.
+- **Paris, Lyon et Marseille numérotent en continu depuis 2024.** Le ministère y numérote
+  les bureaux d'un bout à l'autre du **secteur** (à Paris, les arrondissements 1 à 4 fusionnés
+  en « Paris Centre » : l'arr. 2 commence à 11, l'arr. 3 à 21, l'arr. 4 à 36) au lieu de
+  repartir de 01 à chaque arrondissement — vérifié fichier par fichier : le 4<sup>e</sup>
+  porte `0401…0414` dans les dix-huit scrutins de 2012 à 2022 et `0436…0449` dans les six de
+  2024 à 2026. `construire_crosswalk_plm` reconstruit l'appariement **arrondissement par
+  arrondissement**, par la même règle que les communes renumérotées : c'est la maille juste,
+  puisque la renumérotation est propre à un arrondissement et que la prendre à la commune
+  détacherait les 903 bureaux de Paris pour les quinze du 4<sup>e</sup>. La première version
+  alignait par rang « là où les effectifs coïncident », entendu comme un **nombre de codes
+  égal** des deux côtés : le 4<sup>e</sup> arrondissement comptant 14 contours et **quinze**
+  codes en 2024 — les quatorze habituels plus un `0499` de 1 183 inscrit·es propre aux
+  européennes — la règle s'abstenait en bloc et ses 14 bureaux, **19 062 inscrit·es en plein
+  Paris**, restaient sans contour dans tous les scrutins récents, alors que les inscrits
+  confirment leur alignement à 1,5 % d'écart médian. L'alignement ordonné place les quatorze
+  et laisse `0499` de côté, privé de contour comme n'importe quelle création. Les
+  arrondissements dont la numérotation n'a pas changé ne sont pas touchés : leurs codes
+  coïncident (Marseille 9<sup>e</sup> : 46 codes identiques sur 50, soit 92 % de l'électorat)
+  et les quatre restants sont de vraies créations.
+- **Les conseils de secteur PLM 2026 n'avaient aucun contour.** Ces deux scrutins sont les
+  seuls du corpus à ne porter qu'un `code_secteur` (`13055SR01`), et le code de bureau était
+  bâti dessus : `13055SR01_0101`, que ni les contours (`13055_0101`) ni le crosswalk ne
+  connaissent. Les **1 714 bureaux** du 1<sup>er</sup> tour, **2 281 337 inscrit·es**,
+  ne portaient donc **ni frise de recomposition au bureau ni estimation par quartier** :
+  sous la commune, ces deux tours manquaient à la chronologie de toutes les fiches de Paris,
+  Lyon et Marseille. (Les couches **peintes** de la carte ne servent que quatre scrutins de
+  référence et n'étaient pas concernées.) Le code se bâtit désormais **toujours sur
+  la commune** : le numéro de bureau porte déjà l'arrondissement, les 1 714 couples
+  (commune, bureau) sont uniques — aucune collision entre les 34 secteurs — et forment
+  exactement l'ensemble des bureaux de PLM aux municipales du même jour. Résultat :
+  **98,5 % de l'électorat localisé** (1 677 bureaux sur 1 714), et **2 860 estimations
+  (quartier × scrutin)** là où il n'y en avait aucune — 1 546 au 1<sup>er</sup> tour,
+  1 314 au second. Le secteur, lui, reste la clé
+  de **circonscription** qui retrouve une liste dans la table des listes conduites par LFI —
+  la requalification est inchangée au suffrage près.
+- **Le chiffre de tête nomme son scrutin.** Quand l'indicateur affiché n'a pas de valeur
+  dans la zone, la fiche se replie sur le vote LFI, en essayant les européennes 2024, puis
+  les législatives 2024, puis la présidentielle 2022. L'intitulé annonçait « Europ. 2024 »
+  dans les trois cas et l'effectif était lu dans le registre des européennes : le
+  4<sup>e</sup> arrondissement de Paris affichait « 20,2 % aux européennes 2024 », qui était
+  sa valeur de la **présidentielle 2022**. Défaut **préexistant**, sur **1 975 bureaux,
+  1 394 quartiers et 29 communes** — celles qu'un bureau supprimé depuis 2022 ou un
+  détachement prive de valeurs 2024. La fiche nomme désormais le scrutin qu'elle montre,
+  lit l'effectif dans le registre de **ce** scrutin, et dit pourquoi elle se replie.
+- **Le crosswalk de Paris est confirmé par la géométrie officielle — et il lui manque un
+  bureau.** La Ville de Paris publie les **secteurs officiels** de ses bureaux de vote
+  (polygones, pas approximations) pour 2021, 2022 et **2026** : c'est le seul territoire de
+  France où un « avant » et un « après » existent. Les numéros y confirment la
+  renumérotation en continu à la lettre — arr. 1 : 1-10, arr. 2 : **11-20**, arr. 3 :
+  **21-35**, arr. 4 : **36-49**, puis retour au local à partir du 5<sup>e</sup>. Appariés par
+  recouvrement de surface (99,9 % de recouvrement médian, rattachement retenu au-delà de
+  90 %), les secteurs 2026 et 2022 valident **39 couples sur 39** du crosswalk déduit des
+  seuls inscrits, et l'identité pour **854 des 857** autres bureaux rattachables — sous le
+  seuil, un secteur 2026 est un bureau créé dont le territoire a été prélevé sur plusieurs
+  anciens. Restent **trois** désaccords : deux sont des bureaux créés depuis 2022 (sans
+  contour, donc déjà non peints), et **un est une vraie erreur** : le bureau `75056_1371` (13<sup>e</sup>)
+  est peint sur le contour de 2022 qui porte son numéro, alors que son secteur officiel de
+  2026 recouvre à **98 %** celui de l'ancien `75056_1334`. Les inscrits le disaient à demi-mot
+  (1 213 en 2024 contre 1 699 en 2022, 29 % d'écart) mais l'arrondissement, jugé en bloc sur
+  ses 72 codes, reste crédible : un code faux sur 72 ne bouge ni la médiane ni la part de
+  bureaux faux. **Aucun témoin disponible dans le pipeline ne peut trancher ce cas** ; seule
+  la géométrie officielle le voit. Le corriger suppose d'ajouter les secteurs officiels de
+  Paris comme source (Lyon en publie un millésime courant, Marseille aucun depuis 2019) — non
+  fait à ce stade, et écrit ici pour ne pas le laisser tacite. La vérification est
+  rejouable : [validation_continuite.py](validation_continuite.py) télécharge les secteurs
+  officiels et réimprime ce verdict.
+- **Ce qui reste, mesuré.** Après ces traitements, **759 bureaux** (573 200 inscrit·es,
+  1,1 % des codes communs) portent le même code en 2022 et en 2024 avec plus de **20 %**
+  d'écart d'inscrits, dont **640** (489 424 inscrit·es) peints sur la carte — contre 1 047
+  et 934 auparavant. Ce résidu n'est pas séparable avec les témoins disponibles : dans la
+  population présumée **intacte** (58 518 bureaux dont le jeu de codes est identique d'un
+  millésime à l'autre), **0,60 %** des bureaux dépassent déjà 20 % d'écart, 0,26 % dépassent
+  30 % et 0,10 % dépassent 50 % — c'est la dérive normale d'une liste électorale. L'excès sur
+  le corpus complet est de l'ordre de **0,5 point (~350 bureaux)** : les détacher tous
+  coûterait plus de bureaux justes qu'il n'en corrigerait de faux, et à la maille du bureau
+  isolé aucun second témoin n'existe (le nombre de bureaux et l'électorat, qui corroborent au
+  niveau du groupe, ne disent rien d'un bureau seul). La décision reste donc **de groupe** —
+  commune, ou arrondissement à PLM — et ce résidu est publié comme tel plutôt que masqué.
 - Les **contours IRIS** dépendent d'un téléchargement IGN parfois throttlé ; si absent, les
   données IRIS restent disponibles en tableau.
 - Un **scrutin entier pouvait disparaître à cause d'une commune**. `construire_resultats`

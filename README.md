@@ -25,6 +25,15 @@ rapport aux autres — ce qu'une carte sert à faire — sans obliger le lecteur
 qu'est une bonne valeur. Saint-Denis note `84`, Montreuil `71`, Paris `57`, la Creuse `43`,
 le Cantal `33`.
 
+**Un niveau est écrit devant la note**, qui reste écrite derrière : « **Priorité forte**
+(`84 / 100`) » à Saint-Denis, « **Priorité moyenne** (`43 / 100`) » dans la Creuse. Le
+nombre ne se lit qu'en sachant d'abord que `50` est le terrain médian de France — le mot le
+dit avant. Quatre paliers : *priorité faible* jusqu'à `40`, *moyenne* de `41` à `60`,
+*forte* de `61` à `90`, *très forte* au-delà. C'est un choix d'**affichage** et non une
+propriété de l'échelle : il ne change rien au calcul, le rang reste celui de la note, et
+deux zones d'un même palier se départagent sur le nombre — c'est pourquoi il est toujours
+écrit. Aucun palier ne dit « rien à gagner ici » : cela, seul le `0` le dit.
+
 Le `100` étant un repère de **dispersion** et non le meilleur terrain du pays, un terrain
 d'exception le **dépasse** : Épinay-sur-Seine note `105`, Esnandes `165`, et le meilleur
 bureau de France `220`. C'est voulu, et rare — `2,3 %` des bureaux. Voir le barème
