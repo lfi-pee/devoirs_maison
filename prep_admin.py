@@ -32,6 +32,19 @@ AGES = ["0014", "1529", "3044", "4559", "6074", "75P"]  # 6 tranches (slide 26)
 # part des jeunes (corrélation −0,53), donc il fabrique des non-inscrit·es fantômes dans
 # les communes âgées. On somme donc les tranches exactes.
 AGES_18P = ["1824", "2539", "4054", "5564", "6579", "80P"]
+# NAT1 (« Population par sexe, âge et nationalité ») : la SEULE table INSEE qui croise
+# nationalité et âge sous le département. Publiée à la commune et à l'arrondissement PLM,
+# en quatre tranches seulement — 0-14 / 15-24 / 25-54 / 55 et + — d'où le rabattement
+# ci-dessous des six tranches fines de la base IC sur les trois tranches adultes.
+NAT1 = ("8202752", "TD_NAT1_2021_csv.zip")
+NAT1_DE_AGE = {
+    "1824": "15",
+    "2539": "25",
+    "4054": "25",
+    "5564": "55",
+    "6579": "55",
+    "80P": "55",
+}
 TRANSPORTS = ["PAS", "MAR", "VELO", "2ROUESMOT", "VOIT", "TCOM"]  # slide 28
 # IRAN (résidence un an avant) -> 5 catégories de la slide 25, dans l'ordre d'affichage :
 # même logement / autre logement même commune / autre commune du dépt / hors dépt en
@@ -99,6 +112,94 @@ def _pop_par_age(pop: pd.DataFrame) -> pd.DataFrame:
     if "P21_POP_FR" in g.columns:
         out["part_fr"] = (100 * g["P21_POP_FR"] / base).round(2)
     return out
+
+
+def _part_fr_18p(cache: Path, pop: pd.DataFrame) -> pd.Series:
+    """Part de nationalité française parmi les MAJEUR·ES, commune par commune.
+
+    `part_fr` (cf. `_pop_par_age`) est mesurée sur TOUTE la population, mineur·es compris,
+    et sert pourtant à ramener `pop18` au corps électoral potentiel. Or la structure par
+    âge des deux populations diffère, et pas du même signe partout : là où les ménages
+    étranger·es sont jeunes et avec enfants, la part d'étranger·es parmi les adultes est
+    plus forte que dans l'ensemble, donc `part_fr` SUR-estime le corps électoral potentiel
+    et fabrique du réservoir d'inscription ; ailleurs c'est l'inverse. Le biais n'est donc
+    pas un niveau qu'on pourrait absorber dans un calage national — il est GÉOGRAPHIQUE,
+    et c'est la géographie qui décide où on envoie une équipe.
+
+    Mesure de ce que ça change (validation_non_inscription.py, 9 septembre 2026) : au
+    national presque rien, 49,10 M de majeur·es français·es contre 49,01 M — 84 000
+    personnes, 0,17 %. Mais en Seine-Saint-Denis, département le plus étranger de
+    métropole, l'écart du résidu départemental à sa droite d'ajustement tombe de +8,6 à
+    +6,9 points.
+    C'est de loin le plus gros des quatre grands écarts déplacés : le Val-de-Marne recule
+    de 0,64 point, les Ardennes de 0,15 et les Hautes-Alpes de 0,20 — ces trois-là ne
+    viennent donc pas de la nationalité.
+    EVOLUTIONS.md dit ce qui reste.
+
+    NAT1 ne descend pas sous quatre tranches d'âge : la tranche « 15-24 » porte donc aussi
+    les 15-17 ans, dont la part d'étranger·es n'est pas exactement celle des 18-24. Biais
+    résiduel, sans commune mesure avec celui qu'il remplace.
+
+    Une tranche muette ne doit pas rendre la commune muette. Deux garde-fous, parce que
+    NAT1 se tait de deux façons différentes et qu'aucune ne veut dire « zéro Français·e » :
+
+    - une tranche PEUPLÉE dont aucun·e habitant·e n'est français·e n'a pas de ligne
+      `INATC == "1"` du tout. Le rapport y vaut zéro, pas NaN : d'où le `fillna(0)` sur le
+      numérateur, appliqué APRÈS avoir vérifié que le dénominateur, lui, est bien peuplé.
+    - une tranche ABSENTE de la table, ou peuplée de zéro personne, ne dit rien du tout.
+      On ne l'invente pas : elle sort du numérateur ET du dénominateur, et la part est la
+      moyenne des seules tranches renseignées.
+
+    Sans ces deux garde-fous une seule tranche muette suffisait à faire retomber toute la
+    commune sur `part_fr` : 234 communes en 2021, dont 13 seulement étaient réellement
+    absentes de NAT1. Il en reste **19** : ces 13, plus les 6 villages de la Meuse détruits
+    en 1914-1918 et jamais repeuplés, que NAT1 déclare à zéro habitant·e dans chacune des
+    trois tranches adultes — d'eux, il n'y a rien à mesurer. Plus toutes les communes si le
+    fichier n'est pas téléchargeable, la série renvoyée étant alors vide."""
+    dest = cache / NAT1[1]
+    if not dest.exists() and not prep_geo._telecharger(
+        f"{INSEE}/{NAT1[0]}/{NAT1[1]}", dest
+    ):
+        return pd.Series(dtype=float)
+    with zipfile.ZipFile(dest) as z:
+        nom = next(n for n in z.namelist() if n.upper().endswith(".CSV"))
+        with z.open(nom) as f:
+            nat = pd.read_csv(
+                f,
+                sep=";",
+                usecols=["NIVGEO", "CODGEO", "AGE4", "INATC", "NB"],
+                dtype={"NIVGEO": str, "CODGEO": str, "AGE4": str, "INATC": str},
+            )
+    # ARM = arrondissements de Paris/Lyon/Marseille, dont la base IC porte aussi le code
+    # (751xx…) : les prendre ensemble aligne les deux tables sans rabattement.
+    nat = nat[nat["NIVGEO"].isin(("COM", "ARM"))]
+    g = nat.groupby(["CODGEO", "AGE4", "INATC"])["NB"].sum().unstack("INATC")
+    if "1" not in g.columns:
+        return pd.Series(dtype=float)
+    # Dénominateur d'abord : une tranche à zéro (ou absente) ne dit rien, et NaN la sort
+    # du calcul. Le numérateur, lui, est légitimement vide quand la tranche est peuplée
+    # sans aucun·e Français·e — d'où le zéro, jamais un NaN, une fois le peuplement acquis.
+    total = g.sum(axis=1).replace(0, float("nan"))
+    part = (g["1"].fillna(0).where(total.notna()) / total).unstack("AGE4")
+
+    fines = [a for a in AGES_18P if f"P21_POP{a}" in pop.columns]
+    if len(fines) != len(AGES_18P):
+        return pd.Series(dtype=float)
+    eff = pop.groupby("COM")[[f"P21_POP{a}" for a in fines]].sum()
+    # Moyenne des seules tranches renseignées : une tranche muette sort des DEUX sommes,
+    # au lieu de propager son NaN à toute la commune.
+    num = den = 0.0
+    for a in fines:
+        p = part.get(NAT1_DE_AGE[a], pd.Series(dtype=float)).reindex(eff.index)
+        e = eff[f"P21_POP{a}"].where(p.notna(), 0.0)
+        num = num + e * p.fillna(0.0)
+        den = den + e
+    out = 100 * num / den.replace(0, float("nan"))
+    # Ligne FRANCE : la moyenne des communes PONDÉRÉE par leurs majeur·es, jamais la
+    # moyenne des parts — sinon 34 000 villages pèsent autant que Paris.
+    m = num.notna() & den.notna()
+    out.loc["FRANCE"] = 100 * num[m].sum() / den[m].sum()
+    return out.round(2)
 
 
 def _logement(log: pd.DataFrame) -> pd.DataFrame:
@@ -236,7 +337,11 @@ def construire_admin(cache: Path, communes: pd.DataFrame) -> AdminTables:
     bases = _telecharger_bases(cache)
     morceaux: list[pd.DataFrame] = []
     if "pop" in bases:
-        morceaux.append(_pop_par_age(_lire_base_ic(bases["pop"])))
+        pop = _lire_base_ic(bases["pop"])
+        morceaux.append(_pop_par_age(pop))
+        part18 = _part_fr_18p(cache, pop)
+        if not part18.empty:
+            morceaux.append(part18.rename("part_fr18").to_frame())
     if "log" in bases:
         morceaux.append(_logement(_lire_base_ic(bases["log"])))
     if "act" in bases:

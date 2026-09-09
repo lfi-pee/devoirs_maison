@@ -951,11 +951,25 @@ Tout provient du dépôt **hexagonal** (agrégation France insoumise) :
   et fabriquait des réservoirs fantômes dans les communes âgées.
   Calage national (INSEE, présidentielle 2022) : **2,9 M** de non-inscrit·es (5,8 % des
   Français·es majeur·es), **7,7 M** de mal-inscrit·es (16,5 % des inscrit·es). Somme des
-  soldes positifs après correction : **3,13 M**, contre 5,92 M avant ; solde net national
-  **1,71 M**. Deux biais résiduels de l'ordre du point se compensent : la part de nationalité
-  française est mesurée sur toute la population (les étranger·es étant plus adultes que la
-  moyenne, on sur-corrige un peu), et les ressortissant·es de l'UE inscrit·es sur la liste
-  complémentaire sont comptés dans les inscrit·es aux européennes.
+  soldes positifs après correction : **3,09 M**, contre 5,92 M avant ; solde net national
+  **1,62 M**. La part de nationalité française est désormais mesurée sur les **majeur·es**
+  (`part_fr18`, table INSEE NAT1, seule à croiser nationalité et âge à la commune ;
+  `part_fr`, mesurée sur toute la population, n'est plus que le repli des 13 communes
+  absentes de la table ; 6 autres, les villages de la Meuse détruits en 1914-1918, n'ont
+  de valeur d'aucun côté et ne sont pas servies). Reste un
+  biais résiduel en sens inverse, non mesuré et de l'ordre du point : les ressortissant·es
+  de l'UE inscrit·es sur la liste complémentaire sont comptés dans les inscrit·es aux
+  européennes, alors qu'ils sortent du numérateur.
+  Ce solde est maintenant **confronté à une mesure extérieure** et il en manque une part
+  connue : sommé au national sur la présidentielle 2022, scrutin de référence de l'étude
+  INSEE, il vaut **2,26 M** contre **2,84 M** attendus (5,8 % de nos 49,0 M de majeur·es
+  français·es), soit **−20 %** ; le lien avec la part départementale d'inscrit·es hors
+  commune de résidence publiée par l'INSEE (figure 4, 16,5 % au national) est réel
+  (Spearman **0,477** en métropole sur 96 départements), mais la droite d'ajustement coupe
+  l'axe à **−0,064** là où la comptabilité l'attend vers **+0,058**. Ce décalage de
+  12 points, présent sous tous les départements, est la **contamination des listes**
+  (Français·es de l'étranger sur liste communale, radiations en retard), qui n'est pas
+  modélisée. Voir `validation_non_inscription.py`.
 - **Chercher une commune fusionnée** ouvre désormais la commune **nouvelle**, pas le code
   mort : « Bellegarde-sur-Valserine » mène à Valserhône, « Corcelles » à
   Champdor-Corcelles. **2 180 anciens noms** restent cherchables comme alias (affichés

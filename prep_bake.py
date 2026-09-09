@@ -427,6 +427,45 @@ def _agreger_plm(adm: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame.from_dict(lignes, orient="index")
 
 
+def part_fr_majeurs(adm: pd.DataFrame) -> pd.Series:
+    """Part de nationalité française parmi les MAJEUR·ES : `part_fr18` (NAT1, cf.
+    prep_admin._part_fr_18p), avec `part_fr` — mesurée sur toute la population — en repli
+    là où NAT1 ne donne pas de valeur exploitable."""
+    fine, large = adm.get("part_fr18"), adm.get("part_fr")
+    if large is None:
+        return fine
+    return large if fine is None else fine.fillna(large)
+
+
+def admin_communes(da: Path) -> pd.DataFrame:
+    """`admin_commune` indexé par code, villes PLM reconstituées, part de nationalité des
+    majeur·es déjà résolue dans `part_fr_maj`."""
+    adm = pd.read_parquet(da / "admin_commune.parquet").set_index("code_commune")
+    part = part_fr_majeurs(adm)
+    if part is not None:
+        adm["part_fr_maj"] = part
+    return pd.concat([adm.drop(index="FRANCE", errors="ignore"), _agreger_plm(adm)])
+
+
+def maj_potentielle(adm: pd.DataFrame) -> pd.Series:
+    """Corps électoral potentiel par commune, arrondi exactement comme il est servi.
+
+    Cette fonction et `admin_communes` sont la source UNIQUE du chiffre : le bake le sert,
+    validation_non_inscription.py le juge, et tous deux passent par ici. Le juge a d'abord
+    reconstruit le calcul de son côté, et deux écarts s'y étaient logés — pondération PLM
+    (1 631 personnes) et arrondi commune par commune (183), 1 814 en tout : assez pour
+    qu'un écart de plomberie puisse passer pour un écart de mesure. On ne reconstruit donc
+    plus : on appelle, et l'écart est nul par construction.
+
+    `pop18` et `part_fr` sont servis sous condition par prep_admin (tranches fines
+    présentes, `P21_POP_FR` présente) : si un millésime INSEE en renomme une, la série
+    revient vide et le carnet se tait, comme avant — le reste du bake continue."""
+    pop18, part = adm.get("pop18"), adm.get("part_fr_maj")
+    if pop18 is None or part is None:
+        return pd.Series(float("nan"), index=adm.index)
+    return (pop18.astype(float) * part.astype(float) / 100).round()
+
+
 def _baker_carnet(com: dict[str, dict], da: Path) -> None:
     """Champs du Carnet de campagne (chantier 3) : population et RÉSERVOIR D'INSCRIPTION
     — le levier n°1 du plan d'action. Les inscrit·es viennent désormais du socle électoral
@@ -450,7 +489,10 @@ def _baker_carnet(com: dict[str, dict], da: Path) -> None:
       majeure TOUTES nationalités : les 43 484 résident·es étranger·es de Montpellier
       (14,4 % de la population) entraient dans un « réservoir d'inscription » où, hors
       liste complémentaire européenne, elles et ils ne peuvent pas figurer. On multiplie
-      donc par `part_fr`.
+      donc par la part de nationalité française parmi les MAJEUR·ES (`part_fr18`, NAT1,
+      cf. prep_admin._part_fr_18p), avec `part_fr` en repli sur les 13 communes absentes
+      de NAT1. Six autres n'ont de valeur ni d'un côté ni de l'autre — les villages de la
+      Meuse détruits en 1914-1918, sans habitant·e à recenser : elles ne sont pas servies.
     - **la mal-inscription était comptée deux fois.** L'ancien champ `malinsc`
       (population majeure × part des arrivé·es de l'année) était ADDITIONNÉ à l'écart par
       le plan d'action — alors que quelqu'un qui vit ici et reste inscrit ailleurs est
@@ -470,29 +512,32 @@ def _baker_carnet(com: dict[str, dict], da: Path) -> None:
 
     Calage national (INSEE, présidentielle 2022) : 2,9 M de non-inscrit·es (5,8 % des
     Français·es majeur·es) et 7,7 M de mal-inscrit·es (16,5 % des inscrit·es). Somme des
-    soldes positifs après correction : 3,13 M (contre 5,92 M avant) ; solde net national :
-    1,71 M."""
+    soldes positifs après correction : 3,09 M (contre 5,92 M avant) ; solde net national :
+    1,62 M.
+
+    Ce que vaut ce solde a maintenant une mesure, et elle est sévère : sommé au national
+    sur le scrutin de référence de l'étude INSEE, il donne 2,26 M contre 2,84 M attendus,
+    soit −20 % (validation_non_inscription.py). L'écart n'est pas la nationalité ni l'âge
+    mais la contamination des listes, qui n'est pas modélisée."""
     f = da / "admin_commune.parquet"
     if not f.exists():
         return
-    adm = pd.read_parquet(f).set_index("code_commune")
-    adm = pd.concat([adm.drop(index="FRANCE", errors="ignore"), _agreger_plm(adm)])
+    adm = admin_communes(da)
+    # Corps électoral POTENTIEL de la commune : les majeur·es qui pourraient être
+    # inscrit·es ici. Reste un biais en sens inverse, non mesuré : les ressortissant·es de
+    # l'UE sont comptés dans `inscrits` aux européennes via la liste complémentaire, alors
+    # qu'ils sortent du numérateur. Il est de l'ordre du point.
+    maj_de = maj_potentielle(adm)
     servis = 0
     for code, row in adm.iterrows():
         o = com.get(str(code))
         if o is None or pd.isna(row.get("pop")):
             continue
         o["pop"] = int(float(row["pop"]))
-        pop18, part_fr = row.get("pop18"), row.get("part_fr")
+        maj = maj_de.get(code)
         ins = o.get(f"insc_{CLE_REGISTRE}")
-        if ins is None or pd.isna(pop18) or pd.isna(part_fr):
+        if ins is None or maj is None or pd.isna(maj):
             continue
-        # Corps électoral POTENTIEL de la commune : les majeur·es qui pourraient être
-        # inscrit·es ici. `part_fr` est mesurée sur toute la population : les étranger·es
-        # étant plus adultes que la moyenne, on sur-corrige légèrement — biais compensé en
-        # sens inverse par les ressortissant·es de l'UE, comptés dans `inscrits` aux
-        # européennes via la liste complémentaire. Les deux sont de l'ordre du point.
-        maj = round(float(pop18) * float(part_fr) / 100)
         o["maj"] = int(maj)
         o["resinsc"] = int(maj - ins)
         servis += 1
