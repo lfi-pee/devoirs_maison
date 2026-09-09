@@ -8,6 +8,14 @@
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<!-- Polices de la charte graphique de la France insoumise (https://lafranceinsoumise.fr/charte-graphique/).
+     La charte prescrit Config Variable, sous licence — elle nomme elle-même les alternatives
+     GRATUITES à servir à sa place, et ce sont celles-ci : Public Sans (titres en Black 900,
+     sous-titres en Bold) et Gowun Batang (corps de texte, Regular et Bold). `display=swap` :
+     la carte s'affiche dans la pile de repli plutôt que d'attendre le réseau. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;family=Public+Sans:ital,wght@0,300..900;1,400..700&amp;display=swap"/>
 <style>/*__CSS__*/</style>
 <script>/* thème appliqué avant le premier rendu : sinon la page s'affiche en sombre puis bascule (flash) quand 13_theme.js s'exécute, en bas du document. Défaut = sombre, seul un choix explicite de l'utilisateur bascule en clair. */
 try{document.documentElement.dataset.theme=localStorage.getItem("atlas_theme")==="light"?"light":"dark";}catch(e){}</script>
@@ -55,8 +63,8 @@ try{document.documentElement.dataset.theme=localStorage.getItem("atlas_theme")==
 <div id="info" class="panel"></div>
 <div id="legend" class="panel">
   <div id="legtitle" style="font-weight:600;color:var(--lav)"></div>
-  <div style="margin-top:4px"><span style="color:#2166ac">– faible</span>
-    <span class="bar"></span><span style="color:#b2182b">élevé +</span></div>
+  <div style="margin-top:4px"><span style="color:var(--rampl)">– faible</span>
+    <span class="bar"></span><span style="color:var(--ramph)">élevé +</span></div>
   <div class="hint">couleur = écart à la médiane des zones affichées (bleu = plus faible, rouge = plus élevé) · cliquez pour descendre d'un niveau, dézoomez pour remonter</div>
 </div>
 <!-- Notice de méthode, ouverte par le « i » de la légende (versions 2 et 3). Le volet de la

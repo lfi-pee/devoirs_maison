@@ -4,33 +4,74 @@
      :root[data-theme="light"]. Aucune règle plus bas ne code une couleur en dur, à
      l'exception des couleurs de DONNÉES (nuances politiques, échelle bleu→rouge de la
      choroplèthe), identiques dans les deux thèmes.
-     Accents violet (--lav) et cramoisi (--cram) repris de la charte. */
+
+     ── CHARTE GRAPHIQUE DE LA FRANCE INSOUMISE ──
+     https://lafranceinsoumise.fr/charte-graphique/ — palette 2027 :
+       Violet  #4C0297 (impression) · #7b13d6 (écran)
+       Rouge   #D1271C (impression) · #f91616 (écran)
+       Crème   #FFFCF4        Charbon #212320
+     Le THÈME CLAIR est la charte telle qu'elle est publiée : crème, charbon, violet
+     d'impression. Le THÈME SOMBRE l'inverse (crème sur charbon) ; la charte ne prévoit
+     rien pour un fond sombre, où le violet et le rouge d'écran tombent respectivement à
+     2,2:1 et 3,9:1 sur le charbon — invisibles. Ils y sont donc ÉCLAIRCIS à teinte et
+     saturation constantes, jusqu'à 4,5:1 (AA) sur la plus claire des surfaces de panneau
+     (--pbg2) : --lav #b875f3 et --cram #fb5f5f. Chaque couple texte/fond de cette feuille
+     a été vérifié à ce seuil ; toute retouche d'un token doit l'être aussi. */
   :root{
+    /* Répertoires typographiques de la charte. Config Variable est sous licence et ne
+       peut pas être redistribuée : la charte nomme elle-même ses ALTERNATIVES GRATUITES,
+       et ce sont celles-là qui sont chargées (voir map.html) — Public Sans Black/Bold
+       pour les titres et sous-titres, Gowun Batang Regular/Bold pour le corps de texte.
+       Le partage suit la charte, à une réserve près : dans un atlas, « corps de texte »
+       veut dire TEXTE SUIVI (méthodes, notes, notices). Les libellés, les commandes et
+       surtout les NOMBRES restent en Public Sans, parce que Gowun Batang est un serif à
+       petite hauteur d'x DÉPOURVU de chiffres tabulaires — or `font-variant-numeric:
+       tabular-nums` tient l'alignement de toutes les colonnes de la fiche, et les
+       tableaux y descendent à 9,5 px. Pour tout ramener à une fonte : --f-corps:var(--f-titre). */
+    --f-titre:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --f-corps:"Gowun Batang",Georgia,"Times New Roman",serif;
     /* --pbgs : même teinte que --pbg mais OPAQUE, pour les éléments collants qui
        doivent masquer le contenu qui défile dessous (poignée du bottom-sheet). */
-    --pbg:rgba(26,22,36,.93); --pbgs:#1a1624; --pbg2:#221d30; --pbg3:#322b46; --bord:#3a3350;
-    --bg:#0f0d15;
-    --txt:#e9e4f2; --mut:#9b93ad; --mut2:#7d7591; --lav:#b39ddb; --cram:#e8456f;
+    --pbg:rgba(33,35,32,.93); --pbgs:#212320; --pbg2:#2b2e2a; --pbg3:#3a3e39; --bord:#474b45;
+    --bg:#151714;
+    --txt:#fffcf4; --mut:#a9a89e; --mut2:#8b8a80; --lav:#b875f3; --cram:#fb5f5f;
     /* fort = texte à contraste maximal sur fond de panneau ; onacc = texte sur fond accentué */
-    --strong:#fff; --onacc:#fff;
-    --acc:#6b3a9e; --acc2:#7d49b3;
+    --strong:#fff; --onacc:#fffcf4;
+    /* Texte posé sur un APLAT --cram (pastille de levier, moitié gauche de la balance).
+       Une seule couleur ne peut pas être à la fois lisible SUR le charbon et PORTER du
+       crème : les deux contrastes se multiplient pour donner l'amplitude totale du thème
+       (15,45), et il en faudrait 4,5 × 4,5 = 20,25. Le thème sombre écrit donc en charbon
+       sur son rouge éclairci (5,2:1) et le thème clair en crème sur le rouge de la charte
+       (5,1:1) — l'ancien blanc sur cramoisi ne donnait que 3,8:1. */
+    --oncram:#212320;
+    --acc:#7b13d6; --acc2:#9333e8;
     /* teintes violettes translucides : fonds de cartes internes (soft) et survol (softh) */
-    --soft:rgba(90,60,130,.16); --softh:rgba(123,73,179,.22);
-    --track:#2c2640; --tick:#fff; --sh:rgba(0,0,0,.5);
-    --bnr1:rgba(107,58,158,.96); --bnr2:rgba(26,22,36,.94);
+    --soft:rgba(123,19,214,.18); --softh:rgba(123,19,214,.28);
+    --track:#343830; --tick:#fffcf4; --sh:rgba(0,0,0,.5);
+    --bnr1:rgba(123,19,214,.96); --bnr2:rgba(33,35,32,.94);
     /* bloc « plan d'action » / « conclusions » : carte violette plus dense */
-    --actbg:#2d1640; --actbd:#4a2d63; --acttx:#f3ecfa; --actld:#d9c7ec; --actmu:#c9b6e0;
+    --actbg:#2a1044; --actbd:#4b1f7a; --acttx:#f4ecfd; --actld:#cfa4f7; --actmu:#bda2d6;
     /* volet de détail (méthodo) */
-    --detbg:rgba(90,60,130,.18); --detbd:#6b4d94; --dettx:#cabfdc;
-    --warnbg:rgba(184,124,30,.16); --warnbd:rgba(184,124,30,.5); --warntx:#f3d9a6;
+    --detbg:rgba(123,19,214,.16); --detbd:#6a2ba8; --dettx:#cfc8dc;
+    /* avertissement : jaune de la charte (#f9c900), éclairci pour rester lisible */
+    --warnbg:rgba(249,201,0,.14); --warnbd:rgba(249,201,0,.45); --warntx:#f0cf5c;
     /* couleurs lues par le JS (contours des polygones, zones sans données) */
-    --geosel:#fff; --geoline:#1a1a1a; --geonodata:#3a3a3a;
-    /* Échelle de la choroplèthe (rang : bleu = faible → rouge = élevé). Le thème sombre
-       creuse la luminosité au centre (violet-gris) et sature aux extrêmes ; ses demi-tons
+    --geosel:#fffcf4; --geoline:#151714; --geonodata:#3a3d38;
+    /* Échelle de la choroplèthe (rang : bleu = faible → rouge = élevé). ÉCHAPPE À LA
+       CHARTE, comme toutes les couleurs de données : c'est un encodage divergent, dont
+       la charte ne fournit pas l'équivalent, et le repeindre en violet/rouge du mouvement
+       ferait lire une valeur là où il n'y a qu'une marque. Le thème sombre creuse la
+       luminosité au centre (violet-gris) et sature aux extrêmes ; ses demi-tons
        (bleu et rouge foncés) deviendraient boueux sur fond clair, d'où une seconde échelle
        de type RdBu. Dans les deux cas le ton médian reste nettement distinct du fond de
        carte ET du gris « pas de données » (--geonodata), qui lui doit s'en approcher. */
     --ramp0:#3b8fd4; --ramp1:#2d5b82; --ramp2:#46415a; --ramp3:#9e3b34; --ramp4:#d23f2d;
+    /* Les deux ÉTIQUETTES de la légende (« – faible », « élevé + ») : mêmes teintes que les
+       bornes de la rampe, mais ce sont du TEXTE et non des aplats — elles doivent donc
+       passer le seuil de lisibilité, que les bornes elles-mêmes n'ont pas à tenir. Elles
+       étaient codées en dur dans map.html (#2166ac / #b2182b), invisibles en thème sombre
+       (2,7:1 et 2,3:1) et insensibles au thème. */
+    --rampl:#4d9ad8; --ramph:#df7568;
     /* Bleus LR / RN : SEULE exception à « les couleurs de données ne changent pas avec le
        thème ». Le navy RN (#1f3a63), lisible sur papier, tombe à 1,56:1 sur fond sombre —
        en-tête de colonne et barre littéralement invisibles. On garde la hiérarchie
@@ -50,25 +91,43 @@
        --info-t : haut de la fiche = sous TOUT ce qui est ancré en haut. */
     --top-b:97px; --bar-b:97px; --sub-w:0px; --info-t:140px;
   }
-  /* Thème clair : mêmes accents (violet LFI, cramoisi), fond papier lavande. Le cramoisi
-     et le violet sont assombris pour rester lisibles sur fond clair (contraste AA). */
+  /* Thème clair = la charte telle qu'elle est publiée : papier crème (#FFFCF4), encre
+     charbon (#212320), violet et rouge d'IMPRESSION (#4C0297, #D1271C) — qui sont aussi
+     les deux qui passent le seuil AA sur crème (11,6:1 et 5,1:1), là où leurs variantes
+     d'écran ne donneraient que 7,1:1 et 3,7:1. Le violet d'écran (#7b13d6) sert de survol. */
   :root[data-theme="light"]{
-    --pbg:rgba(255,255,255,.94); --pbgs:#fff; --pbg2:#f3f1f8; --pbg3:#e7e2f0; --bord:#d2ccdf;
-    --bg:#eceaf1;
-    --txt:#1d1829; --mut:#5d5674; --mut2:#7f7894; --lav:#6b3a9e; --cram:#c41d4f;
-    --strong:#120e1c; --onacc:#fff;
-    --acc:#6b3a9e; --acc2:#7d49b3;
-    --soft:rgba(107,58,158,.07); --softh:rgba(107,58,158,.15);
-    --track:#e2dcee; --tick:#1d1829; --sh:rgba(40,28,66,.18);
-    --bnr1:rgba(107,58,158,.22); --bnr2:rgba(255,255,255,.92);
-    --actbg:#f7f2fc; --actbd:#dccdea; --acttx:#241d33; --actld:#5c2f8a; --actmu:#5d5674;
-    --detbg:rgba(107,58,158,.09); --detbd:#a487c9; --dettx:#332a49;
-    --warnbg:rgba(184,124,30,.14); --warnbd:rgba(184,124,30,.45); --warntx:#7a4b0b;
-    --geosel:#fff; --geoline:#4a4458; --geonodata:#dcd9e2;
+    --pbg:rgba(255,252,244,.94); --pbgs:#fffcf4; --pbg2:#f7f2e4; --pbg3:#ece5d3; --bord:#d8d0bd;
+    --bg:#f1ebdd;
+    --txt:#212320; --mut:#5c5e58; --mut2:#787a73; --lav:#4c0297; --cram:#d1271c;
+    --strong:#111311; --onacc:#fffcf4; --oncram:#fffcf4;
+    --acc:#4c0297; --acc2:#7b13d6;
+    --soft:rgba(76,2,151,.06); --softh:rgba(76,2,151,.14);
+    --track:#e6dfcd; --tick:#212320; --sh:rgba(33,35,32,.18);
+    --bnr1:rgba(123,19,214,.20); --bnr2:rgba(255,252,244,.92);
+    --actbg:#f6effc; --actbd:#ddc9f2; --acttx:#241a33; --actld:#4c0297; --actmu:#5b5468;
+    --detbg:rgba(76,2,151,.07); --detbd:#a482cd; --dettx:#332a45;
+    --warnbg:rgba(180,120,0,.13); --warnbd:rgba(180,120,0,.42); --warntx:#7a5200;
+    --geosel:#fffcf4; --geoline:#4a4740; --geonodata:#ddd6c6;
     --ramp0:#0d6ba8; --ramp1:#6ba8d1; --ramp2:#c6bdd4; --ramp3:#e8916d; --ramp4:#c4231c;
+    --rampl:#0d6ba8; --ramph:#c4231c;
     --lr:#3b6ea5; --rn:#1f3a63;
   }
-  html,body{margin:0;height:100%;font-family:system-ui,sans-serif;background:var(--bg);color:var(--txt)}
+  html,body{margin:0;height:100%;font-family:var(--f-titre);background:var(--bg);color:var(--txt)}
+  /* TEXTE SUIVI → corps de texte de la charte (Gowun Batang). Ne sont concernés que les
+     blocs qui se lisent en phrases : méthodes, notes, infobulles, notices, formulaire.
+     Tout ce qui est libellé, commande, tableau ou nombre reste en Public Sans (cf. le
+     commentaire de --f-corps). Un serif se lit plus petit qu'un sans à taille égale,
+     d'où le demi-point rendu à ces blocs-là. */
+  #banner .bnr-txt,
+  #info .hint::after,
+  #info .detbody,#info .mnote,#info .hypnote,#info .ahint,#info .gahint,#info .defs,
+  #info .act li,#info .act .inv,#info .lvb,#info ul.rcom li,#info .recos .rcohint,
+  #modal p,#modal .hypnote,
+  #legend .hint,.sgnote,.sgfoot{font-family:var(--f-corps)}
+  #info .detbody,#modal p{font-size:12.5px}
+  /* …sauf les widgets CHIFFRÉS logés à l'intérieur de ces blocs : l'équation du score et
+     le barème gradué alignent des nombres, ils restent donc en chiffres tabulaires. */
+  .notesc,#info .detbody .mobeq,#info .detbody .mobdet{font-family:var(--f-titre)}
   #map{position:absolute;inset:0;background:var(--bg)}
   .panel{position:absolute;z-index:1000;background:var(--pbg);color:var(--txt);
          border:1px solid var(--bord);border-radius:10px;
@@ -84,7 +143,8 @@
   #banner.hidden{display:none}
   #banner .bnr-ico{font-size:18px;flex:none;line-height:1}
   #banner .bnr-txt{line-height:1.35;color:var(--txt)}
-  #banner .bnr-txt b{color:var(--strong)}
+  /* nom du site : le seul vrai TITRE de l'interface — Public Sans Black. */
+  #banner .bnr-txt b{font-family:var(--f-titre);font-weight:900;letter-spacing:-.01em;color:var(--strong)}
   #banner .bnr-cta{color:var(--lav)}
   #bnrclose{flex:none;margin-left:auto;cursor:pointer;border:none;background:transparent;
             color:var(--mut);font-size:15px;line-height:1;padding:4px 7px;border-radius:6px}
@@ -142,7 +202,7 @@
   #info .reperes span{display:inline-flex;align-items:center;white-space:nowrap}
   #info .reperes b{color:var(--txt);font-weight:800;margin-right:4px}
   #info .lead{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
-  #info .head{font-size:30px;font-weight:800;color:var(--cram);line-height:1;margin:2px 0 8px}
+  #info .head{font-size:30px;font-weight:900;color:var(--cram);line-height:1;margin:2px 0 8px;letter-spacing:-.015em}
   #info .head small{font-size:13px;color:var(--mut);font-weight:600}
   /* Effectif sous le chiffre de tête : ce que le taux représente en personnes. */
   #info .headsub{font-size:11.5px;color:var(--mut);margin:-5px 0 8px;
@@ -198,7 +258,7 @@
             line-height:1.2;min-height:11px}
   #info .mnote{margin-top:7px;font-size:11px;line-height:1.4;color:var(--mut);border-left:2px solid var(--cram);padding-left:7px}
   #info .bal{display:flex;height:22px;border-radius:6px;overflow:hidden;font-size:11px;color:var(--onacc);font-weight:700}
-  #info .bal .bg{background:var(--cram);display:flex;align-items:center;justify-content:center;min-width:30px}
+  #info .bal .bg{background:var(--cram);color:var(--oncram);display:flex;align-items:center;justify-content:center;min-width:30px}
   #info .bal .bn{background:#3b6ea5;display:flex;align-items:center;justify-content:center;min-width:30px}
   #info .exp .exph{cursor:pointer;position:relative;padding-right:15px}
   #info .exp .exph::after{content:"›";position:absolute;right:1px;top:1px;color:var(--lav);font-weight:700}
@@ -254,8 +314,10 @@
      du rail — la réserve de 20 px n'y serait qu'un blanc. */
   .notesc.nocur{padding-top:10px}
   .notescr{position:relative;height:9px;border-radius:5px;background:var(--track)}
+  /* --acc → --acc2 et non --acc → --lav : en thème clair, l'accent et le violet de texte
+     sont tous deux le violet d'impression de la charte, et le dégradé y était plat. */
   .notescr i{display:block;height:100%;border-radius:5px;
-       background:linear-gradient(90deg,var(--acc),var(--lav))}
+       background:linear-gradient(90deg,var(--acc),var(--acc2))}
   .notescr u{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;
        background:var(--tick);opacity:.55}
   .notescc{position:absolute;top:-19px;transform:translateX(-50%);white-space:nowrap;
@@ -336,7 +398,7 @@
   #info .lever{margin:7px 0;padding-bottom:7px;border-bottom:1px solid var(--actbd)}
   #info .lever:last-child{border-bottom:none;padding-bottom:0}
   #info .lvh{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-  #info .lvn{background:var(--cram);color:var(--onacc);font-weight:800;font-size:11px;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  #info .lvn{background:var(--cram);color:var(--oncram);font-weight:800;font-size:11px;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;flex:none}
   #info .lvh b{color:var(--strong);font-size:12.5px}
   #info .lvwin{font-size:10px;color:var(--actmu);border:1px solid var(--actbd);border-radius:10px;padding:1px 7px}
   #info .lvres{margin-left:auto;font-size:11px;font-weight:700;color:var(--lav);font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -387,7 +449,7 @@
   #modal{top:50%;left:50%;transform:translate(-50%,-50%);z-index:1400;
          width:min(640px,92vw);max-height:min(76vh,760px);overflow:auto;overscroll-behavior:contain;
          padding:18px 22px;line-height:1.55}
-  #modal h3{margin:0 0 10px;font-size:15px;color:var(--lav)}
+  #modal h3{margin:0 0 10px;font-size:15px;color:var(--lav);font-weight:900}
   #modal p{margin:0 0 9px;font-size:12.5px}
   #modal b{color:var(--strong)}
   #modal .hypnote{font-size:11.5px;color:var(--mut);border-left:2px solid var(--detbd);padding-left:9px}

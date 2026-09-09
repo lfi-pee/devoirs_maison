@@ -19,8 +19,18 @@ function exportPDF(){ if(!lastInfo){ $("loading").textContent="cliquez une zone 
     (h.closest(".exp")||h).insertAdjacentElement("afterend",d); });
   const content=clone.innerHTML;
   const css=Array.from(document.querySelectorAll("style")).map(s=>s.textContent).join("\n");
-  const html=`<!doctype html><html lang="fr"><head><meta charset="utf-8">`+
-    `<title>atlas_${lvl}_${code}</title><style>${css}</style><style>`+
+  // Les polices de la charte arrivent par <link>, pas par <style> : sans ce report la
+  // fenêtre d'export retomberait sur la pile système et le PDF ne ressemblerait plus
+  // à la fiche — ce que cet export promet précisément.
+  const liens=Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+    .filter(l=>/fonts\.googleapis\.com/.test(l.href))
+    .map(l=>`<link rel="stylesheet" href="${l.href}">`).join("");
+  // `data-theme` reporté : la fiche s'imprime dans le thème où on l'a lue (le thème clair
+  // — crème et charbon de la charte — est aussi celui qui s'imprime sans noyer la page
+  // d'encre). Sans l'attribut, l'export repassait d'office par les tokens de :root.
+  const th=document.documentElement.dataset.theme==="light"?' data-theme="light"':"";
+  const html=`<!doctype html><html lang="fr"${th}><head><meta charset="utf-8">`+
+    `<title>atlas_${lvl}_${code}</title>${liens}<style>${css}</style><style>`+
     `html,body{background:${C.bg};margin:0;padding:0}`+
     `*{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}`+
     `#info{position:static !important;display:block !important;width:auto !important;max-width:780px;`+
@@ -39,7 +49,11 @@ function exportPDF(){ if(!lastInfo){ $("loading").textContent="cliquez une zone 
     `#info .spoiler{break-inside:auto}#info .spoiler .sph{break-after:avoid}`+
     `@page{size:A4;margin:12mm}`+
     `</style></head><body><div id="info" class="panel">${content}</div>`+
-    `<scr`+`ipt>window.onload=function(){setTimeout(function(){window.focus();window.print();},350);};</scr`+`ipt>`+
+    // L'impression attend que les polices soient posées : lancée avant, la boîte
+    // « Enregistrer au format PDF » fige la page dans la pile de repli (`display:swap`
+    // affiche d'abord celle-ci) et le PDF sort dans une autre fonte que l'écran.
+    `<scr`+`ipt>window.onload=function(){var go=function(){setTimeout(function(){window.focus();window.print();},350);};`+
+      `var p=document.fonts&&document.fonts.ready;p?p.then(go,go):go();};</scr`+`ipt>`+
     `</body></html>`;
   const w=window.open("","_blank");
   if(!w){ $("loading").textContent="autorisez les pop-ups pour exporter en PDF"; return; }
