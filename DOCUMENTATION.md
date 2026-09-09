@@ -793,8 +793,9 @@ Tout provient du dépôt **hexagonal** (agrégation France insoumise) :
   soldes positifs après correction : **3,09 M**, contre 5,92 M avant ; solde net national
   **1,62 M**. La part de nationalité française est désormais mesurée sur les **majeur·es**
   (`part_fr18`, table INSEE NAT1, seule à croiser nationalité et âge à la commune ;
-  `part_fr`, mesurée sur toute la population, reste le repli sur 19 communes sans valeur
-  NAT1 exploitable — 13 absentes de la table, 6 sans adultes déclarés). Reste un
+  `part_fr`, mesurée sur toute la population, n'est plus que le repli des 13 communes
+  absentes de la table ; 6 autres, les villages de la Meuse détruits en 1914-1918, n'ont
+  de valeur d'aucun côté et ne sont pas servies). Reste un
   biais résiduel en sens inverse, non mesuré et de l'ordre du point : les ressortissant·es
   de l'UE inscrit·es sur la liste complémentaire sont comptés dans les inscrit·es aux
   européennes, alors qu'ils sortent du numérateur.

@@ -132,8 +132,8 @@ def _part_fr_18p(cache: Path, pop: pd.DataFrame) -> pd.Series:
     métropole, l'écart du résidu départemental à sa droite d'ajustement tombe de +8,6 à
     +6,9 points.
     C'est de loin le plus gros des quatre grands écarts déplacés : le Val-de-Marne recule
-    de 0,6 point (+7,4 à +6,8), les Ardennes de 0,2 (+7,5 à +7,4) et les Hautes-Alpes de
-    0,2 (−7,1 à −6,9) — ces trois-là ne viennent donc pas de la nationalité.
+    de 0,64 point, les Ardennes de 0,15 et les Hautes-Alpes de 0,20 — ces trois-là ne
+    viennent donc pas de la nationalité.
     EVOLUTIONS.md dit ce qui reste.
 
     NAT1 ne descend pas sous quatre tranches d'âge : la tranche « 15-24 » porte donc aussi

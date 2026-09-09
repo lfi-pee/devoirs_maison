@@ -96,6 +96,11 @@ def _mal_inscription_insee(cache: Path) -> pd.DataFrame:
     fig = pd.read_excel(dest, sheet_name=FEUILLE, skiprows=2, dtype={0: str})
     fig = fig.iloc[:, :3].set_axis(["dep", "libelle", "mal_insc"], axis=1)
     fig = fig.dropna(subset=["dep", "mal_insc"])
+    # La feuille porte une ligne « France » (16,5 %) sous les 100 départements. Elle ne
+    # survit aujourd'hui que parce qu'aucune jointure interne ne peut l'apparier : on la
+    # retire ici, pour que l'invariant « une ligne = un département » soit tenu par la
+    # fonction plutôt que par le hasard de l'appelant.
+    fig = fig[fig["dep"].str.fullmatch(r"\d{2,3}|2[AB]")]
     fig["mal_insc"] = pd.to_numeric(fig["mal_insc"], errors="coerce") / 100
     return fig.dropna(subset=["mal_insc"])
 
@@ -105,10 +110,15 @@ def _solde_par_departement(da: Path) -> tuple[pd.DataFrame, str]:
 
     `maj` n'est PAS reconstruit ici : on appelle `prep_bake.maj_potentielle` sur la table
     que `prep_bake.admin_communes` sert au bake. Le juge et le jugé lisent donc le même
-    chiffre, à la personne près. La version précédente le recalculait de son côté, et
-    trois écarts de plomberie s'y étaient glissés — pondération PLM, arrondi, communes
-    absentes du carnet, 2 217 personnes en tout : assez pour qu'un défaut de
-    reconstruction puisse passer pour un défaut de l'estimateur."""
+    chiffre, à la personne près. La version précédente le recalculait de son côté, et deux
+    écarts de plomberie s'y étaient glissés — pondération PLM (1 631 personnes) et arrondi
+    commune par commune (183) : assez pour qu'un défaut de reconstruction puisse passer
+    pour un défaut de l'estimateur.
+
+    Reste un écart qui n'est PAS de la plomberie, et qu'on garde donc en vue : 13 communes
+    ont une ligne recensement et des inscrit·es en 2022 mais aucune entrée dans le carnet
+    publié — les mêmes 13 que NAT1 ne couvre pas. Le test les compte (+404 sur le solde),
+    le site ne les affiche pas. C'est un défaut de publication, pas de mesure."""
     adm = prep_bake.admin_communes(da)
     maj = prep_bake.maj_potentielle(adm).rename("maj").dropna()
 

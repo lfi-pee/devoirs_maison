@@ -431,16 +431,19 @@ def part_fr_majeurs(adm: pd.DataFrame) -> pd.Series:
     """Part de nationalité française parmi les MAJEUR·ES : `part_fr18` (NAT1, cf.
     prep_admin._part_fr_18p), avec `part_fr` — mesurée sur toute la population — en repli
     là où NAT1 ne donne pas de valeur exploitable."""
-    if "part_fr18" not in adm.columns:
-        return adm["part_fr"]
-    return adm["part_fr18"].fillna(adm["part_fr"])
+    fine, large = adm.get("part_fr18"), adm.get("part_fr")
+    if large is None:
+        return fine
+    return large if fine is None else fine.fillna(large)
 
 
 def admin_communes(da: Path) -> pd.DataFrame:
     """`admin_commune` indexé par code, villes PLM reconstituées, part de nationalité des
     majeur·es déjà résolue dans `part_fr_maj`."""
     adm = pd.read_parquet(da / "admin_commune.parquet").set_index("code_commune")
-    adm["part_fr_maj"] = part_fr_majeurs(adm)
+    part = part_fr_majeurs(adm)
+    if part is not None:
+        adm["part_fr_maj"] = part
     return pd.concat([adm.drop(index="FRANCE", errors="ignore"), _agreger_plm(adm)])
 
 
@@ -449,11 +452,18 @@ def maj_potentielle(adm: pd.DataFrame) -> pd.Series:
 
     Cette fonction et `admin_communes` sont la source UNIQUE du chiffre : le bake le sert,
     validation_non_inscription.py le juge, et tous deux passent par ici. Le juge a d'abord
-    reconstruit le calcul de son côté ; les trois écarts de reconstruction qui en sont
-    sortis (pondération PLM, arrondi, communes absentes du carnet) valaient 2 217
-    personnes — assez pour qu'un écart de plomberie puisse passer pour un écart de
-    mesure. On ne reconstruit donc plus : on appelle."""
-    return (adm["pop18"].astype(float) * adm["part_fr_maj"].astype(float) / 100).round()
+    reconstruit le calcul de son côté, et deux écarts s'y étaient logés — pondération PLM
+    (1 631 personnes) et arrondi commune par commune (183), 1 814 en tout : assez pour
+    qu'un écart de plomberie puisse passer pour un écart de mesure. On ne reconstruit donc
+    plus : on appelle, et l'écart est nul par construction.
+
+    `pop18` et `part_fr` sont servis sous condition par prep_admin (tranches fines
+    présentes, `P21_POP_FR` présente) : si un millésime INSEE en renomme une, la série
+    revient vide et le carnet se tait, comme avant — le reste du bake continue."""
+    pop18, part = adm.get("pop18"), adm.get("part_fr_maj")
+    if pop18 is None or part is None:
+        return pd.Series(float("nan"), index=adm.index)
+    return (pop18.astype(float) * part.astype(float) / 100).round()
 
 
 def _baker_carnet(com: dict[str, dict], da: Path) -> None:
@@ -480,8 +490,9 @@ def _baker_carnet(com: dict[str, dict], da: Path) -> None:
       (14,4 % de la population) entraient dans un « réservoir d'inscription » où, hors
       liste complémentaire européenne, elles et ils ne peuvent pas figurer. On multiplie
       donc par la part de nationalité française parmi les MAJEUR·ES (`part_fr18`, NAT1,
-      cf. prep_admin._part_fr_18p), avec `part_fr` en repli sur les 19 communes sans
-      valeur NAT1 exploitable (13 absentes de la table, 6 sans adultes déclarés).
+      cf. prep_admin._part_fr_18p), avec `part_fr` en repli sur les 13 communes absentes
+      de NAT1. Six autres n'ont de valeur ni d'un côté ni de l'autre — les villages de la
+      Meuse détruits en 1914-1918, sans habitant·e à recenser : elles ne sont pas servies.
     - **la mal-inscription était comptée deux fois.** L'ancien champ `malinsc`
       (population majeure × part des arrivé·es de l'année) était ADDITIONNÉ à l'écart par
       le plan d'action — alors que quelqu'un qui vit ici et reste inscrit ailleurs est
