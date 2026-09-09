@@ -72,11 +72,30 @@
        étaient codées en dur dans map.html (#2166ac / #b2182b), invisibles en thème sombre
        (2,7:1 et 2,3:1) et insensibles au thème. */
     --rampl:#4d9ad8; --ramph:#df7568;
-    /* Bleus LR / RN : SEULE exception à « les couleurs de données ne changent pas avec le
-       thème ». Le navy RN (#1f3a63), lisible sur papier, tombe à 1,56:1 sur fond sombre —
-       en-tête de colonne et barre littéralement invisibles. On garde la hiérarchie
-       (RN plus sombre que LR) en remontant les deux d'un cran en thème sombre. */
-    --lr:#7fa8d4; --rn:#4a74b8;
+    /* AXE D'ORIENTATION POLITIQUE — lfi-pee/mobilite-vote-france#1, à l'identique.
+       Les cinq crans du ticket recouvrent exactement la recomposition en blocs déjà
+       servie ici : LFI-PCF = très à gauche, PS-EELV = à gauche, Macron = mixte,
+       LR-DVD = à droite, RN-EXD = très à droite (« Autres » n'est pas sur l'axe et
+       reste gris). Ces cinq-là sont les valeurs du ticket, sans retouche, et ne
+       changent pas avec le thème : ce sont des APLATS (segments de barre, pastilles
+       de légende, barres du rapport de force).
+       --polNt : les mêmes, pour les seuls EN-TÊTES DE COLONNE du tableau de
+       recomposition, qui sont du TEXTE à 10 px. C'est le même partage que
+       --ramp0..4 / --rampl-ramph plus haut, et il remplace l'ancienne exception
+       « bleus LR / RN » : le navy « très à droite » #1E3588 tombe à 1,45:1 sur le
+       charbon (l'en-tête RN y était littéralement invisible) et le bleu clair
+       « à droite » #5CB7FC à 2,13:1 sur le crème. Chaque variante est le cran du
+       ticket éclairci ou assombri à teinte constante jusqu'à 4,5:1, et rien d'autre. */
+    --pol1:#F02248; --pol2:#FF2E8B; --pol3:#A96CDE; --pol4:#5CB7FC; --pol5:#1E3588;
+    --pol1t:#f34969; --pol2t:#FF2E8B; --pol3t:#aa6ede; --pol4t:#5CB7FC; --pol5t:#6a84de;
+    /* Rampe de la NOTE DE PRIORITÉ — lfi-pee/mobilite-vote-france#1, à l'identique.
+       Huit crans sur un score ABSOLU de 0 à 100 : c'est la note de la fiche, et non la
+       carte, qui code un écart à la médiane des zones affichées et garde donc sa rampe
+       divergente (--ramp0..4). Servie en APLAT dans la pastille du chiffre de tête, avec
+       une encre choisie par luminance (charbon ou crème) : posée en couleur de texte,
+       le cran #FEEFB3 ferait 1,12:1 sur le crème et le #800026 1,47:1 sur le charbon. */
+    --note98:#800026; --note94:#BD0026; --note86:#E75355; --note75:#FC775E;
+    --note60:#FDA56A; --note45:#FDC176; --note30:#FEDF7E; --note00:#FEEFB3;
     /* hauteur du bandeau d'accueil : ajustée par JS à la hauteur réelle (0 si masqué),
        elle décale tous les panneaux ancrés en haut pour qu'aucun ne le recouvre. */
     --banner-h:44px;
@@ -110,7 +129,7 @@
     --geosel:#fffcf4; --geoline:#4a4740; --geonodata:#ddd6c6;
     --ramp0:#0d6ba8; --ramp1:#6ba8d1; --ramp2:#c6bdd4; --ramp3:#e8916d; --ramp4:#c4231c;
     --rampl:#0d6ba8; --ramph:#c4231c;
-    --lr:#3b6ea5; --rn:#1f3a63;
+    --pol1t:#e71038; --pol2t:#e50066; --pol3t:#9951d8; --pol4t:#0477cf; --pol5t:#1E3588;
   }
   html,body{margin:0;height:100%;font-family:var(--f-titre);background:var(--bg);color:var(--txt)}
   /* TEXTE SUIVI → corps de texte de la charte (Gowun Batang). Ne sont concernés que les
@@ -204,6 +223,17 @@
   #info .lead{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
   #info .head{font-size:30px;font-weight:900;color:var(--cram);line-height:1;margin:2px 0 8px;letter-spacing:-.015em}
   #info .head small{font-size:13px;color:var(--mut);font-weight:600}
+  /* Pastille de la note (mobilite-vote-france#1) : l'aplat porte la rampe du score, et
+     seule la pastille la porte — le mot et le nombre restent en --cram, vérifié au
+     contraste. L'encre des chiffres est choisie par luminance du cran (cf. encreNote). */
+  #info .head .priobadge{display:inline-flex;align-items:center;justify-content:center;
+       width:36px;height:36px;border-radius:50%;margin-right:10px;vertical-align:1px;
+       font-size:15px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1;
+       /* Filet intérieur, et non une bordure : il ne change pas la taille de la pastille
+          et laisse l'aplat EXACTEMENT au cran du ticket. Sans lui, les deux crans les plus
+          pâles (#FEDF7E, #FEEFB3) n'ont plus de contour sur le papier crème — le cercle
+          disparaît au moment précis où la note est la plus basse. */
+       box-shadow:inset 0 0 0 1px rgba(33,35,32,.22)}
   /* Effectif sous le chiffre de tête : ce que le taux représente en personnes. */
   #info .headsub{font-size:11.5px;color:var(--mut);margin:-5px 0 8px;
                  font-variant-numeric:tabular-nums}

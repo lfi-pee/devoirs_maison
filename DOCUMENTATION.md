@@ -201,7 +201,7 @@ qui l'explique.
 | **Priorité faible** | jusqu'à `40` | `17 %` | `6 %` | `44 %` |
 | **Priorité moyenne** | `41` à `60` | `61 %` | `79 %` | `42 %` |
 | **Priorité forte** | `61` à `90` | `22 %` | `15 %` | `13 %` |
-| **Priorité très forte** | au-delà de `90` | `0 %` | `0 %` | `0,6 %` |
+| **Priorité critique** | au-delà de `90` | `0 %` | `0 %` | `0,6 %` |
 
 Ces parts sont comptées **comme l'interface les affiche**, c'est-à-dire sur l'entier — et
 non sur la note brute, qui donnait ici trois départements de plus en « forte » (`34`, `76`

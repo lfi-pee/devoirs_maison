@@ -242,7 +242,11 @@ const theme=()=>document.documentElement.dataset.theme==="light"?"light":"dark";
 // les tokens CSS. Relecture groupée à chaque changement de thème plutôt que par polygone :
 // getComputedStyle par bureau de vote coûterait des milliers d'appels sur une grande commune.
 const CVARS=["geosel","geoline","geonodata","track","tick","softh","detbd","bg",
-             "ramp0","ramp1","ramp2","ramp3","ramp4","lr","rn"];
+             "ramp0","ramp1","ramp2","ramp3","ramp4",
+             // axe d'orientation politique : aplats (polN) et en-têtes de colonne (polNt)
+             "pol1","pol2","pol3","pol4","pol5","pol1t","pol2t","pol3t","pol4t","pol5t",
+             // rampe de la note de priorité (aplat de la pastille)
+             "note98","note94","note86","note75","note60","note45","note30","note00"];
 const C={};
 // Le parseur de couleurs, c'est le NAVIGATEUR : `fillStyle` accepte tout ce que CSS et
 // MapLibre acceptent (#rgb, rgb(), hsl(), hsla()) et le rend normalisé, là où une regex
@@ -445,20 +449,44 @@ const fmtVal=(v,u)=> (v==null||(typeof v==="number"&&isNaN(v)))?"—":(u==="€"
 //
 // Les seuils sont un choix d'AFFICHAGE et non une propriété de l'échelle : ils vivent
 // donc ici, en un seul endroit, lu tel quel par le barème de la notice (niveauxBareme).
-const NIV_PRIO=[[90,"Priorité très forte"],[60,"Priorité forte"],
+// « Priorité critique » et non « très forte » : c'est le mot du ticket de refonte
+// (lfi-pee/mobilite-vote-france#1), et les deux outils nomment la même chose.
+const NIV_PRIO=[[90,"Priorité critique"],[60,"Priorité forte"],
                 [40,"Priorité moyenne"],[0,"Priorité faible"]];
 // Le niveau se lit sur l'ENTIER AFFICHÉ, pas sur la valeur brute : une note de 90,4
 // s'écrit « 90 / 100 » comme une note de 89,7, et les deux zones ne peuvent pas porter
 // deux mots différents sous le même nombre. C'est l'argument de fmtVal, appliqué au mot.
 const niveauPrio=v=>{ const n=Math.round(v);
   return (NIV_PRIO.find(([s])=>n>s)||NIV_PRIO[NIV_PRIO.length-1])[1]; };
-// Le niveau suivi de sa note. Deux formes, et c'est VOULU : `prioHtml` pour la fiche, qui
-// écrit la note en petit sous le mot, `prioTxt` en texte nu pour tout le reste — l'un des
-// appels est échappé puis ENVOYÉ PAR COURRIEL (contexte joint à une suggestion,
-// 16_suggestion.js), où un « <small> » se lirait tel quel dans le message reçu.
 const nonMesure=v=>v==null||(typeof v==="number"&&isNaN(v));
+// Rampe de la note (lfi-pee/mobilite-vote-france#1) : huit crans sur le score absolu.
+// Lue sur l'ENTIER AFFICHÉ, comme le mot de niveau — une note de 93,8 s'écrit « 94 » et
+// ne peut pas porter la couleur du cran d'en dessous pendant que le nombre dit 94.
+const NOTE_RAMPE=[[98,"note98"],[94,"note94"],[86,"note86"],[75,"note75"],
+                  [60,"note60"],[45,"note45"],[30,"note30"],[0,"note00"]];
+const couleurNote=v=>C[(NOTE_RAMPE.find(([s])=>Math.round(v)>=s)||NOTE_RAMPE[NOTE_RAMPE.length-1])[1]];
+// Encre de la pastille : le cran le plus sombre de la rampe (#800026) et le plus clair
+// (#FEEFB3) ne peuvent pas porter la même. On calcule les DEUX rapports de contraste
+// (WCAG) et on garde le meilleur, plutôt que de couper sur un seuil de luminance : au
+// cran #E75355 le seuil donnait le crème à 3,55:1 là où le charbon vaut 4,35:1 — le
+// seuil se trompait d'encre sur un cran. Le calcul, lui, reste juste si la rampe est
+// retouchée dans map.css. Repli sur le charbon si la couleur n'est pas encore lue.
+const _lumi=c=>{ const l=[c[0],c[1],c[2]].map(x=>{ x/=255;
+    return x<=.04045?x/12.92:Math.pow((x+.055)/1.055,2.4); });
+  return .2126*l[0]+.7152*l[1]+.0722*l[2]; };
+const CHARBON="#212320", CREME="#fffcf4";
+const encreNote=v=>{ const c=rvba(couleurNote(v));
+  if(!c)return CHARBON;
+  const f=_lumi(c), ct=(a,b)=>(Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+  return ct(_lumi(rvba(CHARBON)),f)>=ct(_lumi(rvba(CREME)),f)?CHARBON:CREME; };
+// Deux formes, et c'est VOULU : `prioHtml` pour la fiche, qui écrit la note en petit sous
+// le mot et la double d'une pastille colorée ; `prioTxt` en texte nu pour tout le reste —
+// l'un des appels est échappé puis ENVOYÉ PAR COURRIEL (contexte joint à une suggestion,
+// 16_suggestion.js), où une pastille HTML se lirait telle quelle dans le message reçu.
 const prioTxt =v=>nonMesure(v)?"—":`${niveauPrio(v)} (${fmtVal(v," /100")})`;
-const prioHtml=v=>nonMesure(v)?"—":`${niveauPrio(v)} <small>(${fmtVal(v," /100")})</small>`;
+const prioHtml=v=>nonMesure(v)?"—":
+  `<span class="priobadge" style="background:${couleurNote(v)};color:${encreNote(v)}">`+
+  `${Math.round(v)}</span>${niveauPrio(v)} <small>(${fmtVal(v," /100")})</small>`;
 
 // ── Les effectifs derrière les pourcentages ─────────────────────────────────────────
 // Tout le socle électoral du site est en « % des inscrits » et le socle social en « % de

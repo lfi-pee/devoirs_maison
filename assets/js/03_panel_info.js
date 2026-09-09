@@ -332,10 +332,13 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
   if([o.gauche_E24,o.em_E24,o.lr_E24,o.rn_E24].some(v=>v!=null)){
     const insE=inscScr(o,"E24");
     elec+=exp(sec("Rapport de force · Europ. 2024")+
-      barElec("Gauche (LFI-PS-EELV-PCF)","gauche_E24","#cf2e5b",50,o.gv_E24)+
-      barElec("Macron (Renaissance)","em_E24","#e6902e",50)+
-      barElec("Droite (LR)","lr_E24",C.lr,50)+
-      barElec("RN / extrême droite","rn_E24",C.rn,50),
+      // Axe d'orientation politique (mobilite-vote-france#1). « Gauche » couvre ici DEUX
+      // crans du ticket (très à gauche + à gauche) puisque le ministère publie ce bloc
+      // d'un seul tenant : elle prend le cran du pôle, pas une teinte intermédiaire.
+      barElec("Gauche (LFI-PS-EELV-PCF)","gauche_E24",C.pol1,50,o.gv_E24)+
+      barElec("Macron (Renaissance)","em_E24",C.pol3,50)+
+      barElec("Droite (LR)","lr_E24",C.pol4,50)+
+      barElec("RN / extrême droite","rn_E24",C.pol5,50),
       `Poids de chaque bloc en <b>% des inscrits</b> aux européennes 2024`+
       (insE!=null?` — <b>${nbf(insE)}</b> inscrit·es ici`:"")+`, avec le nombre de voix `+
       `correspondant. <b>Gauche</b> = LFI + PS + EELV + PCF + divers gauche. <b>Macron</b> = `+
@@ -356,7 +359,12 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
   if(window.__scr&&o.rec){
     const heads=["FI","PS","EM","LR","RN","Div","Abs","NV"],
       full=["LFI-PCF","PS-EELV","Macron","LR-DVD","RN-ED","Autres"],
-      cols=["#cf2e5b","#c2348b","#e6902e",C.lr,C.rn,"#8a8a8a"], gris="rgba(140,140,150,.45)",
+      // Les cinq crans de l'axe, dans l'ordre des blocs, plus le gris d'« Autres » — qui
+      // n'est pas sur l'axe. `cols` colore des APLATS (segments, pastilles de légende),
+      // `colsT` les seuls en-têtes de colonne, qui sont du texte à 10 px : le navy
+      // « très à droite » y serait invisible en thème sombre (cf. --polNt dans map.css).
+      cols=[C.pol1,C.pol2,C.pol3,C.pol4,C.pol5,"#8a8a8a"],
+      colsT=[C.pol1t,C.pol2t,C.pol3t,C.pol4t,C.pol5t,"#8a8a8a"], gris="rgba(140,140,150,.45)",
       hachure="repeating-linear-gradient(135deg,rgba(140,140,150,.30) 0 5px,rgba(140,140,150,.10) 5px 10px)";
     // dernier scrutin RÉELLEMENT ventilé : une barre entièrement « non ventilé » (le cas
     // des municipales dans une petite commune) n'apprendrait rien en tête de fiche.
@@ -401,7 +409,7 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
         `dans la participation, jamais dans un bloc — un « · » sur la ligne veut dire `+
         `<b>non mesuré</b>, pas « zéro voix ».</p>`+
         `<div class="rwrap"><table class="recompo"><thead><tr><th></th>`+
-        heads.map((x,j)=>`<th style="color:${cols[j]||'#999'}">${x}</th>`).join("")+
+        heads.map((x,j)=>`<th style="color:${colsT[j]||'#999'}">${x}</th>`).join("")+
         (avecBase?`<th class="ins">Inscrits</th>`:"")+
         `</tr></thead><tbody>${rows}</tbody></table></div>`); } }
 
