@@ -194,6 +194,16 @@
   #pairsel{display:flex;gap:4px;align-items:center;font-size:12px;font-weight:700;color:var(--lav)}
   #pairsel select{font-weight:400;font-size:12px;padding:2px 4px;border:1px solid var(--bord);border-radius:7px;background:var(--pbg2);color:var(--txt);cursor:pointer}
   #pairsel .arr{color:var(--mut);font-weight:700}
+  /* groupe « élection unique » : même principe que #pairgroup, mais un seul scrutin, indépendant
+     de la paire A→B — il ne pilote que Vote LFI / Participation / RN / Gauche. */
+  #singlegroup{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:3px 8px 3px 7px;
+       border:1px solid var(--bord);border-radius:16px;background:var(--soft);transition:.2s}
+  #singlegroup:not(.active){opacity:.62}
+  #singlegroup.active{border-color:var(--lav);background:var(--softh)}
+  #singlelab{font-size:11px;font-weight:700;color:var(--mut);letter-spacing:.03em;white-space:nowrap}
+  #singlegroup.active #singlelab{color:var(--lav)}
+  #singlesel{display:flex;gap:4px;align-items:center;font-size:12px;font-weight:700;color:var(--lav)}
+  #singlesel select{font-weight:400;font-size:12px;padding:2px 4px;border:1px solid var(--bord);border-radius:7px;background:var(--pbg2);color:var(--txt);cursor:pointer}
   .chip{cursor:pointer;border:1px solid var(--bord);border-radius:14px;padding:3px 10px;background:var(--pbg2);color:var(--txt);font-size:12px}
   .chip:hover{border-color:var(--lav)}
   .chip.on{background:var(--acc);color:var(--onacc);border-color:var(--acc)}
@@ -632,6 +642,8 @@
     #pastilles .chip{padding:7px 12px;font-size:13px}
     #pairgroup{flex-wrap:wrap}
     #pairsel select{font-size:16px;padding:5px 6px}
+    #singlegroup{flex-wrap:wrap}
+    #singlesel select{font-size:16px;padding:5px 6px}
 
     /* BV/IRIS : sous la barre, à droite (n'apparaît qu'au niveau commune) */
     #subtoggle{top:calc(var(--top-b) + 8px);right:8px}

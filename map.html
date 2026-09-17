@@ -43,8 +43,12 @@ try{document.documentElement.dataset.theme=localStorage.getItem("atlas_theme")==
   <datalist id="zones"></datalist>
   <span id="loading" class="hint"></span>
 </div>
-<div id="pastilles" class="panel"><span id="pairgroup"
-    title="Choisissez deux élections à comparer (de A à B). Ce choix met à jour les indicateurs de comparaison (voix LFI conservées, évolution de la participation, voix perdues à gauche) et l'élection affichée pour Vote LFI / Participation / RN / Gauche.">
+<div id="pastilles" class="panel"><span id="singlegroup"
+    title="Choisissez une élection. Ce choix met à jour la variante « Élection » de Vote LFI / Participation / RN / Gauche, ainsi que Prioritaire / Abstention / Revenu / Pauvreté (regroupés ici).">
+    <span id="singlelab">🗳️ Élection</span>
+    <span id="singlesel"><select id="selSingle"></select></span>
+    </span><span id="pairgroup"
+    title="Choisissez deux élections à comparer (de A à B). Ce choix met à jour les indicateurs de comparaison (voix LFI conservées, évolution de la participation, voix perdues à gauche) et l'élection affichée pour Vote LFI / Participation / Gauche.">
     <span id="pairlab">⚖️ Comparaison</span>
     <span id="pairsel"><select id="selA"></select><span class="arr">→</span><select id="selB"></select></span>
     </span></div>

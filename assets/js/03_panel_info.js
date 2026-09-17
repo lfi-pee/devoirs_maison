@@ -176,6 +176,11 @@ function headEffectif(o,k,scForce){
         return (a!=null&&b!=null)?`${nbf(a-b)} voix de gauche perdues sur ${nbf(a)}`:""; }
       case "dyn_dpart": { const a=votScr(o,A), b=votScr(o,B);
         return (a!=null&&b!=null)?`${b>a?"+":""}${nbf(b-a)} votant·es`:""; }
+      // ADDITIF, bloc 🗳️ Élection (u_*) : suit selSingle, indépendant de B ci-dessus.
+      case "u_lfi":    return effOu(o[`lfiv_${selSingle}`],inscScr(o,selSingle),o[`lfi_${selSingle}`],"voix")+sur(selSingle);
+      case "u_gauche": return effOu(o[`gv_${selSingle}`],inscScr(o,selSingle),o[`gauche_${selSingle}`],"voix")+sur(selSingle);
+      case "u_rn":     return effTxt(inscScr(o,selSingle),o[`rn_${selSingle}`],"voix")+sur(selSingle);
+      case "u_part": { const v=votScr(o,selSingle); return v==null?"":`${nbf(v)} votant·es`+sur(selSingle); }
       default: return "";
     } })();
   return l?`<div class="headsub">${l}</div>`:""; }

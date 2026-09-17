@@ -35,6 +35,12 @@ const SOCIO=new Set(["rev","pauv"]);
 // à côté de l'effort d'accession qui, lui, le traduit en capacité réelle à se loger et garde
 // donc sa carte.
 const IMMO=new Set(["effort"]);
+// ADDITIF : variante 🗳️ Élection des 4 pastilles électorales à scrutin unique, sur de
+// NOUVELLES clés (u_*) liées à selSingle — lfi/part/rn/gauche (STAT) restent inchangées et
+// liées à selB dans le bloc ⚖️ Comparaison. SINGLE_BASE retrouve le champ de données
+// (`${base}_${scrutin}`) sous-jacent à chaque clé u_*.
+const STAT_SINGLE=new Set(["u_lfi","u_part","u_rn","u_gauche"]);
+const SINGLE_BASE={u_lfi:"lfi",u_part:"part",u_rn:"rn",u_gauche:"gauche"};
 // L'IRIS n'est PAS une maille électorale : le ministère n'y publie rien. Les résultats
 // affichés par quartier sont ESTIMÉS (cf. prep_iris_bv.py) en répartissant les voix de
 // chaque bureau de vote entre les quartiers que son contour recoupe, au prorata de la
@@ -63,7 +69,10 @@ const PAST=[["conquerir","Prioritaire"," /100"],
             ["gauche","Gauche","%"],["dyn_report","Voix LFI conservées","%"],
             ["dyn_dpart","Évolution participation"," pts"],["dyn_perte","Voix perdues à gauche","%"],
             ["abst","Abstention (nb de voix)"," voix"],["rev","Revenu","€"],["pauv","Pauvreté","%"],
-            ["effort","Effort logement","%"]];
+            ["effort","Effort logement","%"],
+            // ADDITIF, bloc 🗳️ Élection : variante à scrutin unique de lfi/part/rn/gauche.
+            ["u_lfi","Vote LFI","%"],["u_part","Participation","%"],["u_rn","Vote RN","%"],
+            ["u_gauche","Gauche","%"]];
 // Hypothèses du prix / de l'effort d'accession — MIROIR de prep_immo.py (à garder
 // synchronisé avec ce fichier). Elles ne sont pas décoratives : un taux d'effort ne veut
 // rien dire si l'on ne dit pas pour quel logement, quel crédit et quel ménage il est calculé.
@@ -163,11 +172,31 @@ const HEAD_INFO={
   pauv:["2021","de la population",()=>
     `Part de la population vivant sous <b>60 % du revenu médian national</b>. Source : INSEE FILOSOFI 2021.`],
   effort:[IMMO_HYP.annees,`du revenu du ménage pour ${IMMO_HYP.surface} m²`,IMMO_METHODO,"Effort d'accession"],
+  // ADDITIF, bloc 🗳️ Élection : variante à scrutin unique (selSingle) de lfi/part/rn/gauche.
+  // Ne remplace rien : lfi/part/rn/gauche ci-dessus restent liées à selB (bloc ⚖️).
+  u_lfi:[null,"des inscrits",()=>
+    `Part des inscrits ayant voté <b>LFI</b> au scrutin choisi dans le bloc 🗳️ Élection `+
+    `(<b>${scLab(selSingle)}</b>). Variante indépendante de la pastille « Vote LFI » du bloc `+
+    `⚖️ Comparaison, qui reste liée au scrutin B choisi là-bas.`,"Vote LFI"],
+  u_part:[null,"des inscrits",()=>
+    `<b>Participation</b> = votants ÷ inscrits au scrutin choisi 🗳️ (<b>${scLab(selSingle)}</b>). `+
+    `Variante indépendante de la pastille « Participation » du bloc ⚖️ Comparaison.`,"Participation"],
+  u_rn:[null,"des inscrits",()=>
+    `Part des inscrits ayant voté <b>RN / extrême droite</b> au scrutin choisi 🗳️ `+
+    `(<b>${scLab(selSingle)}</b>). Variante indépendante de la pastille « Vote RN » du bloc `+
+    `⚖️ Comparaison.`,"Vote RN"],
+  u_gauche:[null,"des inscrits",()=>
+    `Part des inscrits ayant voté pour l'ensemble de la <b>gauche</b> au scrutin choisi 🗳️ `+
+    `(<b>${scLab(selSingle)}</b>). Variante indépendante de la pastille « Gauche » du bloc `+
+    `⚖️ Comparaison.`,"Gauche"],
 };
 // intitulé du chiffre de tête : scrutins écrits en toutes lettres (la pastille, elle, est
 // à l'étroit et se contente des codes P22/E24…).
 function headLead(k){ const p=PAST.find(x=>x[0]===k); if(!p)return "";
   const hi=HEAD_INFO[k]||[], nom=hi[3]||p[1];
+  // ADDITIF : les clés u_* (bloc 🗳️ Élection) s'affichent avec le scrutin selSingle ; le
+  // reste (dont lfi/part/rn/gauche, bloc ⚖️) suit exactement la logique d'origine ci-dessous.
+  if(STAT_SINGLE.has(k))return `${nom} · ${scLab(selSingle)}`;
   if(hi[0])return `${nom} · ${hi[0]}`;
   return `${nom} · ${k.startsWith("dyn_")?`${scLab(selA)} → ${scLab(selB)}`:scLab(selB)}`; }
 // profil INSEE de la commune (fiche circonscription de la prez, slides 25-28)
@@ -178,6 +207,9 @@ const TR_COL=["#8a8a8a","#cf2e5b","#3b6ea5","#2e8b57","#b08a2e","#7d7591"];
 const MIG_ROWS=["Même logement","Autre logement, même commune","Autre commune du département","Hors département en France","À l'étranger"];
 // scrutins comparés par le sélecteur de réservoir (report / différentiel / taux de perte)
 let selA="P22", selB="E24";
+// scrutin unique du bloc 🗳️ Élection : pilote Vote LFI / Participation / RN / Gauche,
+// indépendamment de la paire A→B ci-dessus (qui ne sert plus qu'aux réservoirs dyn_*).
+let selSingle="E24";
 const scLab=c=>(SCR.find(s=>s[0]===c)||[,c])[1];
 // niveaux : 0 France→Région · 1 Région→Dép · 2 Dép→Commune · 3 Commune→BV/IRIS (terminal)
 // La DESCENTE est réservée au CLIC : zoomer ne change jamais la couche affichée. ZIN ne
