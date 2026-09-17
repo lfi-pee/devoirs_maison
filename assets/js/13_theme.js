@@ -5,7 +5,9 @@
 //   2. les couleurs écrites par le JS (échelle de la choroplèthe, contours des polygones) :
 //      syncColors() puis redessin de la couche courante SANS recadrer la caméra ;
 //   3. la fiche ouverte, dont quelques couleurs sont posées en style inline à la génération.
-// Le choix est mémorisé (localStorage) ; sans choix, le thème sombre reste celui du site.
+// Le choix est mémorisé (localStorage) ; sans choix explicite, le thème suit celui du
+// système/navigateur (prefers-color-scheme), sombre par défaut si l'appareil n'a pas de
+// préférence — cf. le script d'entête de map.html, qui pose l'attribut AVANT ce fichier.
 (function () {
   const btn = $("themetoggle");
   // Au chargement, on ne redessine RIEN : l'attribut est déjà posé par le script d'entête et
