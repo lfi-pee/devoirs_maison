@@ -618,6 +618,10 @@
     #banner{gap:9px;padding:7px 10px;font-size:12px}
     #banner .bnr-cta{display:none}
     #top{left:8px;right:8px;top:calc(var(--banner-h) + 8px);gap:6px;padding:7px 9px}
+    /* Export PDF et Suggérer supposent respectivement une boîte de dialogue d'impression
+       et un clavier confortable : peu adaptés au tactile, et la barre haute est déjà
+       à l'étroit sur mobile — on les retire plutôt que de les entasser en icône seule. */
+    #exportbtn,#suggestbtn{display:none!important}
     /* Cibles tactiles : 44 px de côté (les boutons faisaient 24 px de haut). Pour que la
        barre tienne quand même en deux lignes, les boutons passent en ICÔNE SEULE — leur
        intitulé est dans un <span class="lbl">, masqué ici, et reste dans le title. */
