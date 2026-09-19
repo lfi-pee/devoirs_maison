@@ -155,7 +155,7 @@ function galink(nom){ const q=encodeURIComponent(nom);
 // n'en a pas (un revenu médian, une note sur 100 déjà décomposée dans son « i »), on
 // n'écrit rien plutôt qu'un nombre décoratif.
 function headEffectif(o,k,scForce){
-  const B=scForce||selB, A=selA, sur=sc=>{ const n=inscScr(o,sc);
+  const B=scForce||(STAT.has(k)?selSingle:selB), A=selA, sur=sc=>{ const n=inscScr(o,sc);
     return n==null?"":` sur ${nbf(n)} inscrit·es`; };
   const l=(()=>{
     switch(k){
@@ -176,11 +176,6 @@ function headEffectif(o,k,scForce){
         return (a!=null&&b!=null)?`${nbf(a-b)} voix de gauche perdues sur ${nbf(a)}`:""; }
       case "dyn_dpart": { const a=votScr(o,A), b=votScr(o,B);
         return (a!=null&&b!=null)?`${b>a?"+":""}${nbf(b-a)} votant·es`:""; }
-      // ADDITIF, bloc 🗳️ Élection (u_*) : suit selSingle, indépendant de B ci-dessus.
-      case "u_lfi":    return effOu(o[`lfiv_${selSingle}`],inscScr(o,selSingle),o[`lfi_${selSingle}`],"voix")+sur(selSingle);
-      case "u_gauche": return effOu(o[`gv_${selSingle}`],inscScr(o,selSingle),o[`gauche_${selSingle}`],"voix")+sur(selSingle);
-      case "u_rn":     return effTxt(inscScr(o,selSingle),o[`rn_${selSingle}`],"voix")+sur(selSingle);
-      case "u_part": { const v=votScr(o,selSingle); return v==null?"":`${nbf(v)} votant·es`+sur(selSingle); }
       default: return "";
     } })();
   return l?`<div class="headsub">${l}</div>`:""; }
@@ -623,7 +618,7 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
   } else {
     h+=headline;
     h+=spoiler("Analyse électorale",elec?estBanner(o)+cols(elec):"",isMobileSheet());
-    h+=spoiler("Profil sociologique",cols(socio));
+    h+=spoiler("Profil sociologique",cols(socio),isMobileSheet());
   }
   info.classList.remove("collapsed");
   info.innerHTML=`<div class="sheet-handle"><span class="sh-name">${nom}</span></div>`+

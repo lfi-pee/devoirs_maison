@@ -155,8 +155,7 @@ function rawVal(o,k){ if(!o)return null;
   if(k==="dyn_report")return pairMetrics(o).report;
   if(k==="dyn_dpart") return pairMetrics(o).dpart;
   if(k==="dyn_perte") return pairMetrics(o).perte;
-  if(STAT_SINGLE.has(k)) return o[`${SINGLE_BASE[k]}_${selSingle}`];  // ADDITIF : variante 🗳️ Élection
-  if(STAT.has(k)) return o[`${k}_${selB}`];  // instantané du scrutin B (lfi/part/rn/gauche)
+  if(STAT.has(k)) return o[`${k}_${selSingle}`];
   return o[k]; }
 const valOf=p=>rawVal(curVals[p.__code],indicKey);
 const colValOf=p=>colVal(curVals[p.__code]);
@@ -167,22 +166,13 @@ const colValOf=p=>colVal(curVals[p.__code]);
 // (note sur 100, revenu médian, effort d'accession) ne reçoivent rien.
 function effEtiquette(o){ if(!o)return "";
   const k=indicKey;
-  // ADDITIF : variante 🗳️ Élection (u_*), ne touche pas la branche STAT/selB ci-dessous.
-  if(STAT_SINGLE.has(k)){
-    const base=SINGLE_BASE[k], ins=inscScr(o,selSingle);
-    const exact=base==="lfi"?o[`lfiv_${selSingle}`]:base==="gauche"?o[`gv_${selSingle}`]
-      :base==="part"?votScr(o,selSingle):null;
-    const t=base==="part"
-      ?(exact!=null?`${nbf(exact)} votant·es`:"")
-      :effOu(exact,ins,o[`${base}_${selSingle}`],"voix");
-    return t?`<br><span class="ttn">${t}${ins!=null?` sur ${nbf(ins)} inscrit·es`:""}</span>`:""; }
   if(STAT.has(k)){
-    const base=inscScr(o,selB);
-    const exact=k==="lfi"?o[`lfiv_${selB}`]:k==="gauche"?o[`gv_${selB}`]
-      :k==="part"?votScr(o,selB):null;
+    const base=inscScr(o,selSingle);
+    const exact=k==="lfi"?o[`lfiv_${selSingle}`]:k==="gauche"?o[`gv_${selSingle}`]
+      :k==="part"?votScr(o,selSingle):null;
     const t=k==="part"
       ?(exact!=null?`${nbf(exact)} votant·es`:"")
-      :effOu(exact,base,o[`${k}_${selB}`],"voix");
+      :effOu(exact,base,o[`${k}_${selSingle}`],"voix");
     return t?`<br><span class="ttn">${t}${base!=null?` sur ${nbf(base)} inscrit·es`:""}</span>`:""; }
   if(k==="pauv"&&o.pop!=null){ const t=effTxt(o.pop,o.pauv,"personnes");
     return t?`<br><span class="ttn">${t} sur ${nbf(o.pop)} habitant·es</span>`:""; }

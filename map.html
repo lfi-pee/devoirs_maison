@@ -17,8 +17,8 @@
      la carte s'affiche dans la pile de repli plutôt que d'attendre le réseau. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;family=Public+Sans:ital,wght@0,300..900;1,400..700&amp;display=swap"/>
 <style>/*__CSS__*/</style>
-<script>/* thème appliqué avant le premier rendu : sinon la page s'affiche en sombre puis bascule (flash) quand 13_theme.js s'exécute, en bas du document. Un choix explicite (localStorage) prime ; sans lui, on suit le thème du système/navigateur (prefers-color-scheme), sombre par défaut si l'appareil n'exprime pas de préférence. */
-try{document.documentElement.dataset.theme=localStorage.getItem("atlas_theme")||(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");}catch(e){}</script>
+<script>/* thème appliqué avant le premier rendu : sinon la page s'affiche en sombre puis bascule (flash) quand 13_theme.js s'exécute, en bas du document. Défaut = sombre, seul un choix explicite de l'utilisateur bascule en clair. */
+try{document.documentElement.dataset.theme=localStorage.getItem("atlas_theme")==="light"?"light":"dark";}catch(e){}</script>
 </head>
 <body>
 <div id="map"></div>
@@ -44,11 +44,11 @@ try{document.documentElement.dataset.theme=localStorage.getItem("atlas_theme")||
   <span id="loading" class="hint"></span>
 </div>
 <div id="pastilles" class="panel"><span id="singlegroup"
-    title="Choisissez une élection. Ce choix met à jour la variante « Élection » de Vote LFI / Participation / RN / Gauche, ainsi que Prioritaire / Abstention / Revenu / Pauvreté (regroupés ici).">
+  title="Choisissez l'élection affichée pour Vote LFI / Participation / RN / Gauche. Prioritaire / Abstention / Revenu / Pauvreté / Effort logement sont regroupés ici mais indépendants de ce choix.">
     <span id="singlelab">🗳️ Élection</span>
     <span id="singlesel"><select id="selSingle"></select></span>
     </span><span id="pairgroup"
-    title="Choisissez deux élections à comparer (de A à B). Ce choix met à jour les indicateurs de comparaison (voix LFI conservées, évolution de la participation, voix perdues à gauche) et l'élection affichée pour Vote LFI / Participation / Gauche.">
+    title="Choisissez deux élections à comparer (de A à B). Ce choix met à jour Voix LFI conservées / Évolution participation / Voix perdues à gauche.">
     <span id="pairlab">⚖️ Comparaison</span>
     <span id="pairsel"><select id="selA"></select><span class="arr">→</span><select id="selB"></select></span>
     </span></div>

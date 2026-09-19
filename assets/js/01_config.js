@@ -17,8 +17,8 @@ const BASE="__BASE__";
 const FRANCE=[[41.3,-5.2],[51.2,9.7]];
 const SCR=[["P22","Présid. 2022"],["E24","Europ. 2024"],["L24","Légis. 2024"],["M26","Munic. 2026"]];
 const MET=[["part","Particip."],["lfi","LFI"],["gauche","Gauche"],["rn","RN"],["em","Macron"],["lr","LR"]];
-// pastilles « statiques » (lfi/part/rn/gauche) : instantané du scrutin B choisi dans
-// le sélecteur ⚖️ — d'où la reproduction des cartes BV de la prez à n'importe quel
+// pastilles « statiques » (lfi/part/rn/gauche) : instantané du scrutin choisi dans
+// le sélecteur 🗳️ — d'où la reproduction des cartes BV de la prez à n'importe quel
 // scrutin (Vote LFI Europ. 2024, Munic. 2026, Présid. 2022…), pas seulement aux européennes.
 const STAT=new Set(["lfi","part","rn","gauche"]);
 // rev/pauv : FILOSOFI, dispo seulement à la maille IRIS (absents aux échelons agrégés
@@ -35,12 +35,6 @@ const SOCIO=new Set(["rev","pauv"]);
 // à côté de l'effort d'accession qui, lui, le traduit en capacité réelle à se loger et garde
 // donc sa carte.
 const IMMO=new Set(["effort"]);
-// ADDITIF : variante 🗳️ Élection des 4 pastilles électorales à scrutin unique, sur de
-// NOUVELLES clés (u_*) liées à selSingle — lfi/part/rn/gauche (STAT) restent inchangées et
-// liées à selB dans le bloc ⚖️ Comparaison. SINGLE_BASE retrouve le champ de données
-// (`${base}_${scrutin}`) sous-jacent à chaque clé u_*.
-const STAT_SINGLE=new Set(["u_lfi","u_part","u_rn","u_gauche"]);
-const SINGLE_BASE={u_lfi:"lfi",u_part:"part",u_rn:"rn",u_gauche:"gauche"};
 // L'IRIS n'est PAS une maille électorale : le ministère n'y publie rien. Les résultats
 // affichés par quartier sont ESTIMÉS (cf. prep_iris_bv.py) en répartissant les voix de
 // chaque bureau de vote entre les quartiers que son contour recoupe, au prorata de la
@@ -69,10 +63,7 @@ const PAST=[["conquerir","Prioritaire"," /100"],
             ["gauche","Gauche","%"],["dyn_report","Voix LFI conservées","%"],
             ["dyn_dpart","Évolution participation"," pts"],["dyn_perte","Voix perdues à gauche","%"],
             ["abst","Abstention (nb de voix)"," voix"],["rev","Revenu","€"],["pauv","Pauvreté","%"],
-            ["effort","Effort logement","%"],
-            // ADDITIF, bloc 🗳️ Élection : variante à scrutin unique de lfi/part/rn/gauche.
-            ["u_lfi","Vote LFI","%"],["u_part","Participation","%"],["u_rn","Vote RN","%"],
-            ["u_gauche","Gauche","%"]];
+            ["effort","Effort logement","%"]];
 // Hypothèses du prix / de l'effort d'accession — MIROIR de prep_immo.py (à garder
 // synchronisé avec ce fichier). Elles ne sont pas décoratives : un taux d'effort ne veut
 // rien dire si l'on ne dit pas pour quel logement, quel crédit et quel ménage il est calculé.
@@ -129,8 +120,8 @@ const TIP_PAUV="Part de la population vivant sous 60 % du revenu médian nationa
 // bureau de vote après avoir choisi « Vote RN » doit afficher le vote RN de ce bureau, et
 // non un score LFI figé — la fiche répond à la question que pose la carte. Le vote LFI
 // reste lisible plus bas (section « Évolution du vote LFI »), quel que soit l'indicateur.
-// Par clé : [scrutin FIXE de l'intitulé (null = scrutin(s) du sélecteur ⚖️), légende sous le
-//            chiffre, méthodo du volet détail (paresseuse : dépend de A/B), intitulé au long
+// Par clé : [scrutin FIXE de l'intitulé (null = scrutin 🗳️ pour STAT, paire ⚖️ pour dyn_*),
+//            légende sous le chiffre, méthodo du volet détail (paresseuse : dépend des sélecteurs), intitulé au long
 //            (facultatif : la pastille est à l'étroit, la fiche ne l'est pas)].
 const HEAD_INFO={
   // La méthodologie du score est LONGUE et dépend des valeurs de la zone ouverte : elle
@@ -138,20 +129,20 @@ const HEAD_INFO={
   conquerir:["Légis. 2027","où 50 est le terrain médian de France",o=>rendMethodo(o),
     "Prioritaire"],
   lfi:[null,"des inscrits",()=>
-    `Part des inscrits ayant voté <b>LFI</b> au scrutin choisi dans le sélecteur ⚖️ `+
-    `(<b>${scLab(selB)}</b>) : bulletin LFI, ou candidature d'union que LFI CONDUIT et où elle n'a pas de `+
+    `Part des inscrits ayant voté <b>LFI</b> au scrutin choisi dans le sélecteur 🗳️ `+
+    `(<b>${scLab(selSingle)}</b>) : bulletin LFI, ou candidature d'union que LFI CONDUIT et où elle n'a pas de `+
     `bulletin séparé (NUPES 2022, NFP 2024). Les listes d'union de la gauche que LFI soutient sans les `+
     `mener comptent dans le bloc de gauche, pas ici. On rapporte aux <b>inscrits</b> (et non aux votants) `+
     `pour mesurer le poids réel sur le corps électoral. Source : Ministère de l'Intérieur.`],
   part:[null,"des inscrits",()=>
-    `<b>Participation</b> = votants ÷ inscrits au scrutin choisi ⚖️ (<b>${scLab(selB)}</b>). `+
+    `<b>Participation</b> = votants ÷ inscrits au scrutin choisi 🗳️ (<b>${scLab(selSingle)}</b>). `+
     `L'abstention en est le complément (100 − participation).`],
   rn:[null,"des inscrits",()=>
     `Part des inscrits ayant voté <b>RN / extrême droite</b> (RN + Reconquête + divers ED) au scrutin `+
-    `choisi ⚖️ (<b>${scLab(selB)}</b>). Source : Ministère de l'Intérieur.`],
+    `choisi 🗳️ (<b>${scLab(selSingle)}</b>). Source : Ministère de l'Intérieur.`],
   gauche:[null,"des inscrits",()=>
     `Part des inscrits ayant voté pour l'ensemble de la <b>gauche</b> (LFI + PS + EELV + PCF + divers `+
-    `gauche) au scrutin choisi ⚖️ (<b>${scLab(selB)}</b>).`],
+    `gauche) au scrutin choisi 🗳️ (<b>${scLab(selSingle)}</b>).`],
   dyn_report:[null,"des voix LFI conservées",()=>
     `Part des voix LFI de <b>${scLab(selA)}</b> retrouvées à <b>${scLab(selB)}</b> (voix réelles ${selB} ÷ `+
     `voix réelles ${selA}). 100 % = socle intégralement conservé ; en dessous, des voix insoumises sont à reconquérir.`],
@@ -172,31 +163,12 @@ const HEAD_INFO={
   pauv:["2021","de la population",()=>
     `Part de la population vivant sous <b>60 % du revenu médian national</b>. Source : INSEE FILOSOFI 2021.`],
   effort:[IMMO_HYP.annees,`du revenu du ménage pour ${IMMO_HYP.surface} m²`,IMMO_METHODO,"Effort d'accession"],
-  // ADDITIF, bloc 🗳️ Élection : variante à scrutin unique (selSingle) de lfi/part/rn/gauche.
-  // Ne remplace rien : lfi/part/rn/gauche ci-dessus restent liées à selB (bloc ⚖️).
-  u_lfi:[null,"des inscrits",()=>
-    `Part des inscrits ayant voté <b>LFI</b> au scrutin choisi dans le bloc 🗳️ Élection `+
-    `(<b>${scLab(selSingle)}</b>). Variante indépendante de la pastille « Vote LFI » du bloc `+
-    `⚖️ Comparaison, qui reste liée au scrutin B choisi là-bas.`,"Vote LFI"],
-  u_part:[null,"des inscrits",()=>
-    `<b>Participation</b> = votants ÷ inscrits au scrutin choisi 🗳️ (<b>${scLab(selSingle)}</b>). `+
-    `Variante indépendante de la pastille « Participation » du bloc ⚖️ Comparaison.`,"Participation"],
-  u_rn:[null,"des inscrits",()=>
-    `Part des inscrits ayant voté <b>RN / extrême droite</b> au scrutin choisi 🗳️ `+
-    `(<b>${scLab(selSingle)}</b>). Variante indépendante de la pastille « Vote RN » du bloc `+
-    `⚖️ Comparaison.`,"Vote RN"],
-  u_gauche:[null,"des inscrits",()=>
-    `Part des inscrits ayant voté pour l'ensemble de la <b>gauche</b> au scrutin choisi 🗳️ `+
-    `(<b>${scLab(selSingle)}</b>). Variante indépendante de la pastille « Gauche » du bloc `+
-    `⚖️ Comparaison.`,"Gauche"],
 };
 // intitulé du chiffre de tête : scrutins écrits en toutes lettres (la pastille, elle, est
 // à l'étroit et se contente des codes P22/E24…).
 function headLead(k){ const p=PAST.find(x=>x[0]===k); if(!p)return "";
   const hi=HEAD_INFO[k]||[], nom=hi[3]||p[1];
-  // ADDITIF : les clés u_* (bloc 🗳️ Élection) s'affichent avec le scrutin selSingle ; le
-  // reste (dont lfi/part/rn/gauche, bloc ⚖️) suit exactement la logique d'origine ci-dessous.
-  if(STAT_SINGLE.has(k))return `${nom} · ${scLab(selSingle)}`;
+  if(STAT.has(k))return `${nom} · ${scLab(selSingle)}`;
   if(hi[0])return `${nom} · ${hi[0]}`;
   return `${nom} · ${k.startsWith("dyn_")?`${scLab(selA)} → ${scLab(selB)}`:scLab(selB)}`; }
 // profil INSEE de la commune (fiche circonscription de la prez, slides 25-28)

@@ -1,21 +1,15 @@
 
 // pastilles d'indicateurs (pas de menu déroulant) ; les pastilles « dyn_* » affichent
 // la paire de scrutins choisie (ex. « Report LFI P22→E24 »).
-const usesPair=k=>k.startsWith("dyn_")||STAT.has(k);
+const usesPair=k=>k.startsWith("dyn_");
 const labelFor=k=>{ const p=PAST.find(x=>x[0]===k); if(!p)return k;
   if(k.startsWith("dyn_"))return `${p[1]} ${selA}→${selB}`;
-  // ADDITIF : les clés u_* (bloc 🗳️ Élection) suivent selSingle ; le reste, dont STAT
-  // (lfi/part/rn/gauche, bloc ⚖️ Comparaison), suit exactement la logique d'origine.
-  if(STAT_SINGLE.has(k))return `${p[1]} · ${selSingle}`;
-  return STAT.has(k)?`${p[1]} · ${selB}`:p[1]; };
-// le sélecteur ⚖️ pilote les réservoirs dyn_* (paire A→B) ET le scrutin affiché des
-// pastilles statiques (instantané en B) : on allume le cadre quand l'indicateur actif
-// dépend de la paire, on le grise sinon (Abstention / Revenu / Pauvreté).
+  return STAT.has(k)?`${p[1]} · ${selSingle}`:p[1]; };
+// Le sélecteur ⚖️ pilote les réservoirs dyn_* (paire A→B).
 const updatePairActive=()=>$("pairgroup").classList.toggle("active",usesPair(indicKey));
-// ADDITIF : le bloc 🗳️ Élection s'allume quand l'indicateur actif dépend RÉELLEMENT de
-// selSingle (les clés u_*) — les chips dupliquées (conquerir/abst/rev/pauv) n'en dépendent
-// pas, comme dans le bloc principal.
-const updateSingleActive=()=>$("singlegroup").classList.toggle("active",STAT_SINGLE.has(indicKey));
+const DUP_KEYS=["conquerir","abst","rev","pauv","effort"];
+const SINGLE_KEYS=[...STAT,...DUP_KEYS];
+const updateSingleActive=()=>$("singlegroup").classList.toggle("active",SINGLE_KEYS.includes(indicKey));
 // Revenu/Pauvreté n'ont de données qu'en vue Quartiers IRIS : on n'affiche leurs pastilles
 // que là, et on rebascule sur un indicateur électoral en quittant (sinon choroplèthe vide).
 // « on est en train d'afficher des quartiers IRIS » — indépendant du mode avancé : la
@@ -35,7 +29,7 @@ const immoActive=()=>{ const t=stack[stack.length-1]; return !!t&&t.niveau==="de
 function syncSocioChips(){ const on=socioActive(), immo=immoActive();
   $("pastilles").querySelectorAll(".chip").forEach(c=>{ const k=c.dataset.k;
     c.style.display=(IMMO.has(k)?immo:(on||!SOCIO.has(k)))?"":"none"; });
-  if((!on&&SOCIO.has(indicKey))||(!immo&&IMMO.has(indicKey)))setIndic("u_lfi"); else syncLegend();
+  if((!on&&SOCIO.has(indicKey))||(!immo&&IMMO.has(indicKey)))setIndic("lfi"); else syncLegend();
   if(window.__syncLayout)window.__syncLayout(); }
 // Les valeurs électorales d'un quartier sont estimées : la légende de la carte le dit,
 // comme l'infobulle et la fiche. Sur le score, le titre porte en plus un « i » qui
@@ -58,23 +52,16 @@ function setIndic(k){ const p=PAST.find(x=>x[0]===k); if(!p)return;
   // suivre la pastille (sinon un clic sur « Vote RN » laisse un score LFI affiché).
   if(lastInfo)infoPanel(lastInfo.nom,lastInfo.o,lastInfo.niveau,lastInfo.code); }
 function buildPastilles(){ const grp=$("pairgroup");
-  // seules les pastilles dyn_* restent créées ici (bloc ⚖️) : les autres ne vivent plus
-  // en dehors des 2 blocs, cf. buildSingleGroup ci-dessous.
+  // Seules les pastilles dyn_* vivent dans le bloc ⚖️ ; les autres sont dans le bloc 🗳️.
   PAST.filter(([k])=>k.startsWith("dyn_")).forEach(([k])=>{ const c=document.createElement("span"); c.className="chip"+(k===indicKey?" on":"");
     c.textContent=labelFor(k); c.dataset.k=k;
     c.onclick=()=>{ setIndic(k); closeDrawer(); const t=stack[stack.length-1]; t?render(t.niveau,t.code):vueFrance(); };
     grp.appendChild(c); });
-  buildSingleGroup();  // ADDITIF : peuple le bloc 🗳️ Élection AVANT syncSocioChips ci-dessous
+  buildSingleGroup();
   indicLabel=labelFor(indicKey); syncLegend(); updatePairActive(); updateSingleActive(); syncSocioChips(); }
-// ADDITIF — bloc 🗳️ Élection : duplique par une NOUVELLE clé (u_*, liée à selSingle) les 4
-// pastilles électorales à scrutin unique, et RÉUTILISE telles quelles (mêmes clés, même
-// valeur, aucun scrutin en jeu) les 4 pastilles qui n'en dépendent pas. Ne modifie ni les
-// clés ni le comportement des chips d'origine, présentes ailleurs dans #pastilles.
-const U_KEYS=["u_lfi","u_part","u_rn","u_gauche"];
-const DUP_KEYS=["conquerir","abst","rev","pauv","effort"];
 function buildSingleGroup(){
   const sgl=$("singlegroup");
-  [...U_KEYS,...DUP_KEYS].forEach(k=>{
+  SINGLE_KEYS.forEach(k=>{
     const c=document.createElement("span"); c.className="chip"+(k===indicKey?" on":"");
     c.textContent=labelFor(k); c.dataset.k=k;
     c.onclick=()=>{ setIndic(k); closeDrawer(); const t=stack[stack.length-1]; t?render(t.niveau,t.code):vueFrance(); };
@@ -95,7 +82,6 @@ function buildSelecteur(){
   for(const id of ["selA","selB"]){ const sel=$(id), cur=id==="selA"?selA:selB;
     sel.innerHTML=SCR.map(([c,l])=>`<option value="${c}"${c===cur?" selected":""}>${l}</option>`).join("");
     sel.onchange=()=>{ selA=$("selA").value; selB=$("selB").value; refreshPair(); }; }
-  // ADDITIF : sélecteur indépendant du bloc 🗳️ Élection, ne touche pas la boucle A/B ci-dessus.
   const sgl=$("selSingle");
   sgl.innerHTML=SCR.map(([c,l])=>`<option value="${c}"${c===selSingle?" selected":""}>${l}</option>`).join("");
   sgl.onchange=()=>{ selSingle=sgl.value; refreshSingle(); }; }
@@ -104,10 +90,9 @@ function refreshPair(){
   if(usesPair(indicKey)){ indicLabel=labelFor(indicKey); syncLegend();
     const t=stack[stack.length-1]; t?render(t.niveau,t.code):vueFrance(); }
   if(lastInfo)infoPanel(lastInfo.nom,lastInfo.o,lastInfo.niveau,lastInfo.code); }
-// ADDITIF : équivalent de refreshPair pour le bloc 🗳️ Élection (clés u_*, indépendant).
 function refreshSingle(){
-  $("pastilles").querySelectorAll(".chip").forEach(c=>{ if(STAT_SINGLE.has(c.dataset.k))c.textContent=labelFor(c.dataset.k); });
-  if(STAT_SINGLE.has(indicKey)){ indicLabel=labelFor(indicKey); syncLegend();
+  $("pastilles").querySelectorAll(".chip").forEach(c=>{ if(STAT.has(c.dataset.k))c.textContent=labelFor(c.dataset.k); });
+  if(STAT.has(indicKey)){ indicLabel=labelFor(indicKey); syncLegend();
     const t=stack[stack.length-1]; t?render(t.niveau,t.code):vueFrance(); }
   if(lastInfo)infoPanel(lastInfo.nom,lastInfo.o,lastInfo.niveau,lastInfo.code); }
 // clic sur une section : translate la fiche sur le côté pour révéler son détail (et retour)
@@ -139,6 +124,6 @@ $("info").addEventListener("click",e=>{ const sl=$("info").querySelector(".slide
 // bascule Bureaux de vote ⇄ Quartiers IRIS (au niveau commune)
 $("subtoggle").querySelectorAll(".chip").forEach(c=>c.onclick=()=>{ const m=c.dataset.m; if(m===sousMode)return;
   sousMode=m; $("subtoggle").querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x.dataset.m===m));
-  if(m==="bv"&&SOCIO.has(indicKey))setIndic("u_lfi");
+  if(m==="bv"&&SOCIO.has(indicKey))setIndic("lfi");
   syncSocioChips();
   const t=stack[stack.length-1]; if(t&&t.niveau==="commune")vueCommune(t.code); });
