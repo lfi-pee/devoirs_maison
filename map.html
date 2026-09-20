@@ -17,8 +17,12 @@
      la carte s'affiche dans la pile de repli plutôt que d'attendre le réseau. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;family=Public+Sans:ital,wght@0,300..900;1,400..700&amp;display=swap"/>
 <style>/*__CSS__*/</style>
-<script>/* thème appliqué avant le premier rendu : sinon la page s'affiche en sombre puis bascule (flash) quand 13_theme.js s'exécute, en bas du document. Défaut = sombre, seul un choix explicite de l'utilisateur bascule en clair. */
-try{document.documentElement.dataset.theme=localStorage.getItem("atlas_theme")==="light"?"light":"dark";}catch(e){}</script>
+<script>/* thème appliqué avant le premier rendu : sinon la page s'affiche en sombre puis bascule (flash) quand 13_theme.js s'exécute, en bas du document. Sans choix explicite en localStorage, on suit la préférence système (prefers-color-scheme) ; à défaut de préférence détectable, sombre. */
+try{
+  var t=localStorage.getItem("atlas_theme");
+  if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}
+  document.documentElement.dataset.theme=t;
+}catch(e){}</script>
 </head>
 <body>
 <div id="map"></div>
