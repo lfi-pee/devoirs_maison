@@ -40,6 +40,18 @@
     const ro = new ResizeObserver(schedule);
     ["top", "selbar", "subtoggle", "info", "banner"].forEach(id => { const e = $(id); if (e) ro.observe(e); });
   }
+  // Le défaut ouvert/fermé des spoilers dépend du mode mobile au moment où la fiche est
+  // construite. Un simple redimensionnement (ou une rotation sans rechargement) ne la
+  // reconstruisait pas : elle gardait donc le défaut de l'ancien mode. Ne réafficher la
+  // fiche qu'au franchissement du breakpoint ; spoiler() conserve les choix manuels via
+  // sessionStorage et ne recalcule que les sections encore sur leur défaut.
+  const mobileSheet = matchMedia("(max-width:680px)");
+  const syncInfoMode = () => {
+    schedule();
+    if (lastInfo) infoPanel(lastInfo.nom,lastInfo.o,lastInfo.niveau,lastInfo.code);
+  };
+  if (mobileSheet.addEventListener) mobileSheet.addEventListener("change",syncInfoMode);
+  else mobileSheet.addListener(syncInfoMode);
   addEventListener("resize", schedule);
   addEventListener("orientationchange", schedule);
   sync();
