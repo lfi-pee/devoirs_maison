@@ -765,4 +765,5 @@ France à l'échelle courante ?
 | ------ | ------ |
 | ✅ Fait | Le sélecteur **🗳️ Élection** pilote directement les pastilles existantes **Vote LFI / Participation / RN / Gauche**, sans clés ni notices de méthode dupliquées. Les définitions complètes des blocs électoraux et leurs sources restent accessibles dans la fiche. |
 | ✅ Fait | Le sélecteur **⚖️ Comparaison** ne pilote que les trois indicateurs entre deux scrutins : voix LFI conservées, évolution de la participation et voix perdues à gauche. Les infobulles et la documentation nomment désormais cette séparation. |
-| ✅ Fait | En mobile, **Analyse électorale** et **Profil sociologique** sont ouverts à l'arrivée sur toutes les mailles ; le thème sans préférence enregistrée reste sombre comme auparavant. |
+| ✅ Fait | En mobile, **Analyse électorale**, **Profil sociologique**, **Plan d'action** et **Vue d'ensemble locale** sont ouverts à l'arrivée lorsqu'ils existent. Le choix manuel ouvert/fermé est conservé dans l'onglet pendant la navigation, les re-rendus et les rechargements liés à une rotation. |
+| ✅ Fait | Sans choix explicite enregistré, le thème suit désormais la préférence claire/sombre du système ; un choix effectué avec le bouton de thème reste prioritaire. |
