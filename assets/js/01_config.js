@@ -418,8 +418,7 @@ const expBlock=(body,det)=>{ if(!det)return `<div class="exp">${body}</div>`;
   const i=panelDetails.length; panelDetails.push(det);
   return `<div class="exp"><div class="exph" data-di="${i}">${body}</div></div>`; };
 // Groupe dépliable (spoiler) : en-tête cliquable qui plie/déplie son corps, replié par
-// défaut (open=true pour l'ouvrir). Sert à n'exposer d'office que le Carnet et à ranger
-// l'analyse détaillée derrière un clic. Les sections .exp internes (volet méthodo) restent intactes.
+// défaut (open=true pour l'ouvrir). Les sections .exp internes (volet méthodo) restent intactes.
 // L'état ouvert/fermé est mémorisé PAR TITRE dans sessionStorage : un re-rendu de la fiche
 // (changement de zone, ou rechargement que certains navigateurs mobiles déclenchent à la
 // rotation) retombait sinon sur le défaut du mode — repliage manuel perdu sans rapport avec

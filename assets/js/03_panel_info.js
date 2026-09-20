@@ -594,10 +594,10 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
     `part supplémentaire.`);
   socio+=adminPanel(o);
 
-  // Assemblage : seul le Carnet est ouvert d'office. Toute l'analyse est repliée dans des
-  // spoilers nommés en langage clair (cf. retour Elia : éviter la surcharge décourageante).
-  // Hors commune (région/dép/BV/IRIS), pas de Carnet : on laisse le chiffre de tête visible
-  // pour ancrer la fiche, et on replie le reste.
+  // Assemblage : sur desktop, toute l'analyse est repliée dans des spoilers nommés en
+  // langage clair (cf. retour Elia : éviter la surcharge décourageante). Sur mobile, les
+  // sections disponibles sont ouvertes pour éviter un clic supplémentaire dans le bottom-sheet.
+  // Hors commune (région/dép/BV/IRIS), pas de Carnet : le chiffre de tête reste visible.
   const cols=c=>c?`<div class="cols">${c}</div>`:"";
   if(estCommune){
     // Ouvertes d'office en mobile (bottom-sheet) : le clic supplémentaire pour déplier
