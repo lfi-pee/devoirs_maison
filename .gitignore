@@ -18,3 +18,6 @@ _site/
 # les sorties du modèle 2027 que prep_mobilisation.py lit.
 /hexagonal/
 /elections_predictions/
+
+# Prises de notes personnelles
+/notes_perso/

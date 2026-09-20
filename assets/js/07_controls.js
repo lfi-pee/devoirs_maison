@@ -1,14 +1,15 @@
 
 // pastilles d'indicateurs (pas de menu déroulant) ; les pastilles « dyn_* » affichent
 // la paire de scrutins choisie (ex. « Report LFI P22→E24 »).
-const usesPair=k=>k.startsWith("dyn_")||STAT.has(k);
+const usesPair=k=>k.startsWith("dyn_");
 const labelFor=k=>{ const p=PAST.find(x=>x[0]===k); if(!p)return k;
   if(k.startsWith("dyn_"))return `${p[1]} ${selA}→${selB}`;
-  return STAT.has(k)?`${p[1]} · ${selB}`:p[1]; };
-// le sélecteur ⚖️ pilote les réservoirs dyn_* (paire A→B) ET le scrutin affiché des
-// pastilles statiques (instantané en B) : on allume le cadre quand l'indicateur actif
-// dépend de la paire, on le grise sinon (Abstention / Revenu / Pauvreté).
+  return STAT.has(k)?`${p[1]} · ${selSingle}`:p[1]; };
+// Le sélecteur ⚖️ pilote les réservoirs dyn_* (paire A→B).
 const updatePairActive=()=>$("pairgroup").classList.toggle("active",usesPair(indicKey));
+const DUP_KEYS=["conquerir","abst","rev","pauv","effort"];
+const SINGLE_KEYS=[...STAT,...DUP_KEYS];
+const updateSingleActive=()=>$("singlegroup").classList.toggle("active",SINGLE_KEYS.includes(indicKey));
 // Revenu/Pauvreté n'ont de données qu'en vue Quartiers IRIS : on n'affiche leurs pastilles
 // que là, et on rebascule sur un indicateur électoral en quittant (sinon choroplèthe vide).
 // « on est en train d'afficher des quartiers IRIS » — indépendant du mode avancé : la
@@ -46,16 +47,25 @@ function syncLegend(){ const t=indicLabel+(socioActive()&&!SOCIO.has(indicKey)?"
 function setIndic(k){ const p=PAST.find(x=>x[0]===k); if(!p)return;
   indicKey=p[0]; indicLabel=labelFor(k); indicUnit=p[2]||""; syncLegend();
   $("pastilles").querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x.dataset.k===k));
-  updatePairActive();
+  updatePairActive(); updateSingleActive();
   // le chiffre de tête de la fiche EST l'indicateur actif : une fiche déjà ouverte doit
   // suivre la pastille (sinon un clic sur « Vote RN » laisse un score LFI affiché).
   if(lastInfo)infoPanel(lastInfo.nom,lastInfo.o,lastInfo.niveau,lastInfo.code); }
-function buildPastilles(){ const box=$("pastilles"), grp=$("pairgroup");
-  PAST.forEach(([k])=>{ const c=document.createElement("span"); c.className="chip"+(k===indicKey?" on":"");
+function buildPastilles(){ const grp=$("pairgroup");
+  // Seules les pastilles dyn_* vivent dans le bloc ⚖️ ; les autres sont dans le bloc 🗳️.
+  PAST.filter(([k])=>k.startsWith("dyn_")).forEach(([k])=>{ const c=document.createElement("span"); c.className="chip"+(k===indicKey?" on":"");
     c.textContent=labelFor(k); c.dataset.k=k;
     c.onclick=()=>{ setIndic(k); closeDrawer(); const t=stack[stack.length-1]; t?render(t.niveau,t.code):vueFrance(); };
-    (k.startsWith("dyn_")?grp:box).appendChild(c); });
-  indicLabel=labelFor(indicKey); syncLegend(); updatePairActive(); syncSocioChips(); }
+    grp.appendChild(c); });
+  buildSingleGroup();
+  indicLabel=labelFor(indicKey); syncLegend(); updatePairActive(); updateSingleActive(); syncSocioChips(); }
+function buildSingleGroup(){
+  const sgl=$("singlegroup");
+  SINGLE_KEYS.forEach(k=>{
+    const c=document.createElement("span"); c.className="chip"+(k===indicKey?" on":"");
+    c.textContent=labelFor(k); c.dataset.k=k;
+    c.onclick=()=>{ setIndic(k); closeDrawer(); const t=stack[stack.length-1]; t?render(t.niveau,t.code):vueFrance(); };
+    sgl.appendChild(c); }); }
 // tiroir indicateurs (mobile) : le bouton 📊 déploie #pastilles ; sélectionner une
 // pastille le referme pour redécouvrir la carte. Sans effet en desktop (#pastoggle masqué).
 function closeDrawer(){ $("pastilles").classList.remove("open"); $("pastoggle").classList.remove("on"); $("pastoggle").setAttribute("aria-expanded","false"); }
@@ -71,16 +81,25 @@ $("advtoggle").onclick=()=>{ const on=document.body.classList.toggle("adv");
 function buildSelecteur(){
   for(const id of ["selA","selB"]){ const sel=$(id), cur=id==="selA"?selA:selB;
     sel.innerHTML=SCR.map(([c,l])=>`<option value="${c}"${c===cur?" selected":""}>${l}</option>`).join("");
-    sel.onchange=()=>{ selA=$("selA").value; selB=$("selB").value; refreshPair(); }; } }
+    sel.onchange=()=>{ selA=$("selA").value; selB=$("selB").value; refreshPair(); }; }
+  const sgl=$("selSingle");
+  sgl.innerHTML=SCR.map(([c,l])=>`<option value="${c}"${c===selSingle?" selected":""}>${l}</option>`).join("");
+  sgl.onchange=()=>{ selSingle=sgl.value; refreshSingle(); }; }
 function refreshPair(){
   $("pastilles").querySelectorAll(".chip").forEach(c=>{ if(usesPair(c.dataset.k))c.textContent=labelFor(c.dataset.k); });
   if(usesPair(indicKey)){ indicLabel=labelFor(indicKey); syncLegend();
     const t=stack[stack.length-1]; t?render(t.niveau,t.code):vueFrance(); }
   if(lastInfo)infoPanel(lastInfo.nom,lastInfo.o,lastInfo.niveau,lastInfo.code); }
+function refreshSingle(){
+  $("pastilles").querySelectorAll(".chip").forEach(c=>{ if(STAT.has(c.dataset.k))c.textContent=labelFor(c.dataset.k); });
+  if(STAT.has(indicKey)){ indicLabel=labelFor(indicKey); syncLegend();
+    const t=stack[stack.length-1]; t?render(t.niveau,t.code):vueFrance(); }
+  if(lastInfo)infoPanel(lastInfo.nom,lastInfo.o,lastInfo.niveau,lastInfo.code); }
 // clic sur une section : translate la fiche sur le côté pour révéler son détail (et retour)
 $("info").addEventListener("click",e=>{ const sl=$("info").querySelector(".slider"); if(!sl)return;
   if(e.target.closest(".back")){ sl.classList.remove("on"); $("info").scrollTop=sl._back||0; return; }
-  const sp=e.target.closest(".sph"); if(sp){ sp.parentElement.classList.toggle("open"); return; }
+  const sp=e.target.closest(".sph"); if(sp){ const gr=sp.parentElement, o=gr.classList.toggle("open");
+    try{ sessionStorage.setItem("spoiler:"+sp.firstChild.textContent,o?"1":"0"); }catch(err){} return; }
   const h=e.target.closest(".exph"); if(!h)return;
   sl._back=$("info").scrollTop;
   sl.querySelector(".detbody").innerHTML=panelDetails[+h.dataset.di];

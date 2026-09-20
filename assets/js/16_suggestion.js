@@ -63,6 +63,7 @@ function suggContexte(){
   // « <small> » se lirait donc en clair, ici et dans le message reçu par l'équipe.
   if(v!=null)l.push(["Valeur affichée", indicKey==="conquerir"?prioTxt(v)
     :fmtVal(v,indicUnit==="%"?" %":indicUnit)]);
+  l.push(["Élection choisie", selSingle]);
   l.push(["Scrutins comparés", `${selA} → ${selB}`]);
   l.push(["Permalien", location.href]);
   return l; }

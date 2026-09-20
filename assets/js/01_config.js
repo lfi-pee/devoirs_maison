@@ -17,8 +17,8 @@ const BASE="__BASE__";
 const FRANCE=[[41.3,-5.2],[51.2,9.7]];
 const SCR=[["P22","Présid. 2022"],["E24","Europ. 2024"],["L24","Légis. 2024"],["M26","Munic. 2026"]];
 const MET=[["part","Particip."],["lfi","LFI"],["gauche","Gauche"],["rn","RN"],["em","Macron"],["lr","LR"]];
-// pastilles « statiques » (lfi/part/rn/gauche) : instantané du scrutin B choisi dans
-// le sélecteur ⚖️ — d'où la reproduction des cartes BV de la prez à n'importe quel
+// pastilles « statiques » (lfi/part/rn/gauche) : instantané du scrutin choisi dans
+// le sélecteur 🗳️ — d'où la reproduction des cartes BV de la prez à n'importe quel
 // scrutin (Vote LFI Europ. 2024, Munic. 2026, Présid. 2022…), pas seulement aux européennes.
 const STAT=new Set(["lfi","part","rn","gauche"]);
 // rev/pauv : FILOSOFI, dispo seulement à la maille IRIS (absents aux échelons agrégés
@@ -120,8 +120,8 @@ const TIP_PAUV="Part de la population vivant sous 60 % du revenu médian nationa
 // bureau de vote après avoir choisi « Vote RN » doit afficher le vote RN de ce bureau, et
 // non un score LFI figé — la fiche répond à la question que pose la carte. Le vote LFI
 // reste lisible plus bas (section « Évolution du vote LFI »), quel que soit l'indicateur.
-// Par clé : [scrutin FIXE de l'intitulé (null = scrutin(s) du sélecteur ⚖️), légende sous le
-//            chiffre, méthodo du volet détail (paresseuse : dépend de A/B), intitulé au long
+// Par clé : [scrutin FIXE de l'intitulé (null = scrutin 🗳️ pour STAT, paire ⚖️ pour dyn_*),
+//            légende sous le chiffre, méthodo du volet détail (paresseuse : dépend des sélecteurs), intitulé au long
 //            (facultatif : la pastille est à l'étroit, la fiche ne l'est pas)].
 const HEAD_INFO={
   // La méthodologie du score est LONGUE et dépend des valeurs de la zone ouverte : elle
@@ -129,20 +129,20 @@ const HEAD_INFO={
   conquerir:["Légis. 2027","où 50 est le terrain médian de France",o=>rendMethodo(o),
     "Prioritaire"],
   lfi:[null,"des inscrits",()=>
-    `Part des inscrits ayant voté <b>LFI</b> au scrutin choisi dans le sélecteur ⚖️ `+
-    `(<b>${scLab(selB)}</b>) : bulletin LFI, ou candidature d'union que LFI CONDUIT et où elle n'a pas de `+
+    `Part des inscrits ayant voté <b>LFI</b> au scrutin choisi dans le sélecteur 🗳️ `+
+    `(<b>${scLab(selSingle)}</b>) : bulletin LFI, ou candidature d'union que LFI CONDUIT et où elle n'a pas de `+
     `bulletin séparé (NUPES 2022, NFP 2024). Les listes d'union de la gauche que LFI soutient sans les `+
     `mener comptent dans le bloc de gauche, pas ici. On rapporte aux <b>inscrits</b> (et non aux votants) `+
     `pour mesurer le poids réel sur le corps électoral. Source : Ministère de l'Intérieur.`],
   part:[null,"des inscrits",()=>
-    `<b>Participation</b> = votants ÷ inscrits au scrutin choisi ⚖️ (<b>${scLab(selB)}</b>). `+
+    `<b>Participation</b> = votants ÷ inscrits au scrutin choisi 🗳️ (<b>${scLab(selSingle)}</b>). `+
     `L'abstention en est le complément (100 − participation).`],
   rn:[null,"des inscrits",()=>
     `Part des inscrits ayant voté <b>RN / extrême droite</b> (RN + Reconquête + divers ED) au scrutin `+
-    `choisi ⚖️ (<b>${scLab(selB)}</b>). Source : Ministère de l'Intérieur.`],
+    `choisi 🗳️ (<b>${scLab(selSingle)}</b>). Source : Ministère de l'Intérieur.`],
   gauche:[null,"des inscrits",()=>
     `Part des inscrits ayant voté pour l'ensemble de la <b>gauche</b> (LFI + PS + EELV + PCF + divers `+
-    `gauche) au scrutin choisi ⚖️ (<b>${scLab(selB)}</b>).`],
+    `gauche) au scrutin choisi 🗳️ (<b>${scLab(selSingle)}</b>).`],
   dyn_report:[null,"des voix LFI conservées",()=>
     `Part des voix LFI de <b>${scLab(selA)}</b> retrouvées à <b>${scLab(selB)}</b> (voix réelles ${selB} ÷ `+
     `voix réelles ${selA}). 100 % = socle intégralement conservé ; en dessous, des voix insoumises sont à reconquérir.`],
@@ -168,6 +168,7 @@ const HEAD_INFO={
 // à l'étroit et se contente des codes P22/E24…).
 function headLead(k){ const p=PAST.find(x=>x[0]===k); if(!p)return "";
   const hi=HEAD_INFO[k]||[], nom=hi[3]||p[1];
+  if(STAT.has(k))return `${nom} · ${scLab(selSingle)}`;
   if(hi[0])return `${nom} · ${hi[0]}`;
   return `${nom} · ${k.startsWith("dyn_")?`${scLab(selA)} → ${scLab(selB)}`:scLab(selB)}`; }
 // profil INSEE de la commune (fiche circonscription de la prez, slides 25-28)
@@ -178,6 +179,9 @@ const TR_COL=["#8a8a8a","#cf2e5b","#3b6ea5","#2e8b57","#b08a2e","#7d7591"];
 const MIG_ROWS=["Même logement","Autre logement, même commune","Autre commune du département","Hors département en France","À l'étranger"];
 // scrutins comparés par le sélecteur de réservoir (report / différentiel / taux de perte)
 let selA="P22", selB="E24";
+// scrutin unique du bloc 🗳️ Élection : pilote Vote LFI / Participation / RN / Gauche,
+// indépendamment de la paire A→B ci-dessus (qui ne sert plus qu'aux réservoirs dyn_*).
+let selSingle="E24";
 const scLab=c=>(SCR.find(s=>s[0]===c)||[,c])[1];
 // niveaux : 0 France→Région · 1 Région→Dép · 2 Dép→Commune · 3 Commune→BV/IRIS (terminal)
 // La DESCENTE est réservée au CLIC : zoomer ne change jamais la couche affichée. ZIN ne
@@ -414,11 +418,16 @@ const expBlock=(body,det)=>{ if(!det)return `<div class="exp">${body}</div>`;
   const i=panelDetails.length; panelDetails.push(det);
   return `<div class="exp"><div class="exph" data-di="${i}">${body}</div></div>`; };
 // Groupe dépliable (spoiler) : en-tête cliquable qui plie/déplie son corps, replié par
-// défaut (open=true pour l'ouvrir). Sert à n'exposer d'office que le Carnet et à ranger
-// l'analyse détaillée derrière un clic. Les sections .exp internes (volet méthodo) restent intactes.
-const spoiler=(titre,corps,open=false)=> !corps?"":
-  `<div class="spoiler${open?" open":""}"><div class="sph">${titre}<span class="spcaret">›</span></div>`+
-  `<div class="spbody">${corps}</div></div>`;
+// défaut (open=true pour l'ouvrir). Les sections .exp internes (volet méthodo) restent intactes.
+// L'état ouvert/fermé est mémorisé PAR TITRE dans sessionStorage : un re-rendu de la fiche
+// (changement de zone, ou rechargement que certains navigateurs mobiles déclenchent à la
+// rotation) retombait sinon sur le défaut du mode — repliage manuel perdu sans rapport avec
+// ce que l'utilisateur·ice avait choisi. Clé neutre par titre : stable d'une commune à l'autre.
+const spoilerSaved=k=>{ try{ return sessionStorage.getItem("spoiler:"+k); }catch(e){ return null; } };
+const spoiler=(titre,corps,open=false)=>{ if(!corps)return "";
+  const saved=spoilerSaved(titre), o=saved!=null?saved==="1":open;
+  return `<div class="spoiler${o?" open":""}"><div class="sph">${titre}<span class="spcaret">›</span></div>`+
+    `<div class="spbody">${corps}</div></div>`; };
 // Petit « i » d'explication accolé à un libellé : au SURVOL, une définition courte
 // (infobulle CSS, cf. map.css) ; au CLIC, le volet méthodo de la section — le clic remonte
 // jusqu'à l'entête .exph qui l'ouvre. C'est aussi le repli tactile, où le survol n'existe pas.

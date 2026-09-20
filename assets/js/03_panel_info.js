@@ -155,7 +155,7 @@ function galink(nom){ const q=encodeURIComponent(nom);
 // n'en a pas (un revenu médian, une note sur 100 déjà décomposée dans son « i »), on
 // n'écrit rien plutôt qu'un nombre décoratif.
 function headEffectif(o,k,scForce){
-  const B=scForce||selB, A=selA, sur=sc=>{ const n=inscScr(o,sc);
+  const B=scForce||(STAT.has(k)?selSingle:selB), A=selA, sur=sc=>{ const n=inscScr(o,sc);
     return n==null?"":` sur ${nbf(n)} inscrit·es`; };
   const l=(()=>{
     switch(k){
@@ -594,29 +594,31 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
     `part supplémentaire.`);
   socio+=adminPanel(o);
 
-  // Assemblage : seul le Carnet est ouvert d'office. Toute l'analyse est repliée dans des
-  // spoilers nommés en langage clair (cf. retour Elia : éviter la surcharge décourageante).
-  // Hors commune (région/dép/BV/IRIS), pas de Carnet : on laisse le chiffre de tête visible
-  // pour ancrer la fiche, et on replie le reste.
+  // Assemblage : sur desktop, toute l'analyse est repliée dans des spoilers nommés en
+  // langage clair (cf. retour Elia : éviter la surcharge décourageante). Sur mobile, les
+  // sections disponibles sont ouvertes pour éviter un clic supplémentaire dans le bottom-sheet.
+  // Hors commune (région/dép/BV/IRIS), pas de Carnet : le chiffre de tête reste visible.
   const cols=c=>c?`<div class="cols">${c}</div>`:"";
   if(estCommune){
-    h+=spoiler("Analyse électorale",headline+cols(elec));
-    h+=spoiler("Profil sociologique",cols(socio));
+    // Ouvertes d'office en mobile (bottom-sheet) : le clic supplémentaire pour déplier
+    // n'a de sens qu'en fiche latérale desktop, où l'écran reste chargé sans lui.
+    h+=spoiler("Analyse électorale",headline+cols(elec),isMobileSheet());
+    h+=spoiler("Profil sociologique",cols(socio),isMobileSheet());
     // « les cartes en bas du truc d'Elia » (chantier 4) : vue d'ensemble locale à l'échelle GA,
     // remplie en asynchrone une fois la fiche posée (cf. 032_apercu.js). Le placeholder #apercu
     // existe dans le DOM même replié → fillApercu le remplit sans attendre l'ouverture.
-    h+=spoiler("Plan d'action",actionPanel(o));
+    h+=spoiler("Plan d'action",actionPanel(o),isMobileSheet());
     // Aperçu local et lien GA : réservés à une commune unique (pas en fiche agrégée multi).
     if(niveau==="commune"){
       h+=spoiler("Vue d'ensemble locale · échelle Groupe d'action",
-        `<div id="apercu" class="apercu"><div class="ahint">chargement…</div></div>`);
+        `<div id="apercu" class="apercu"><div class="ahint">chargement…</div></div>`,isMobileSheet());
       // Lien sortant vers l'annuaire officiel des groupes d'action (Action Populaire, retour n°19).
       h+=galink(nom);
     }
   } else {
     h+=headline;
-    h+=spoiler("Analyse électorale",elec?estBanner(o)+cols(elec):"");
-    h+=spoiler("Profil sociologique",cols(socio));
+    h+=spoiler("Analyse électorale",elec?estBanner(o)+cols(elec):"",isMobileSheet());
+    h+=spoiler("Profil sociologique",cols(socio),isMobileSheet());
   }
   info.classList.remove("collapsed");
   info.innerHTML=`<div class="sheet-handle"><span class="sh-name">${nom}</span></div>`+
