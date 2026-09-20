@@ -420,9 +420,15 @@ const expBlock=(body,det)=>{ if(!det)return `<div class="exp">${body}</div>`;
 // Groupe dépliable (spoiler) : en-tête cliquable qui plie/déplie son corps, replié par
 // défaut (open=true pour l'ouvrir). Sert à n'exposer d'office que le Carnet et à ranger
 // l'analyse détaillée derrière un clic. Les sections .exp internes (volet méthodo) restent intactes.
-const spoiler=(titre,corps,open=false)=> !corps?"":
-  `<div class="spoiler${open?" open":""}"><div class="sph">${titre}<span class="spcaret">›</span></div>`+
-  `<div class="spbody">${corps}</div></div>`;
+// L'état ouvert/fermé est mémorisé PAR TITRE dans sessionStorage : un re-rendu de la fiche
+// (changement de zone, ou rechargement que certains navigateurs mobiles déclenchent à la
+// rotation) retombait sinon sur le défaut du mode — repliage manuel perdu sans rapport avec
+// ce que l'utilisateur·ice avait choisi. Clé neutre par titre : stable d'une commune à l'autre.
+const spoilerSaved=k=>{ try{ return sessionStorage.getItem("spoiler:"+k); }catch(e){ return null; } };
+const spoiler=(titre,corps,open=false)=>{ if(!corps)return "";
+  const saved=spoilerSaved(titre), o=saved!=null?saved==="1":open;
+  return `<div class="spoiler${o?" open":""}"><div class="sph">${titre}<span class="spcaret">›</span></div>`+
+    `<div class="spbody">${corps}</div></div>`; };
 // Petit « i » d'explication accolé à un libellé : au SURVOL, une définition courte
 // (infobulle CSS, cf. map.css) ; au CLIC, le volet méthodo de la section — le clic remonte
 // jusqu'à l'entête .exph qui l'ouvre. C'est aussi le repli tactile, où le survol n'existe pas.
