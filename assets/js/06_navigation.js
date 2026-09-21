@@ -123,10 +123,15 @@ function styleFactory(geo,niveau){
   const colOf=v=>(inherit&&v!=null&&!isNaN(v))?inherit:fc(v);
   // En mode sélection multiple (communes uniquement), une commune sélectionnée garde un
   // liseré blanc épais — y compris après un mouseout (resetStyle réapplique ce style).
-  const st=f=>{ const sel=multiSel&&niveau==="commune"&&selCodes.has(f.properties.__code);
-    const fs=fillStyle();
-    return {fillColor:colOf(colValOf(f.properties)),color:sel?C.geosel:C.geoline,
-            weight:sel?2.6:fs.w,fillOpacity:sel?Math.min(.95,fs.op+.2):fs.op}; };
+  // Une commune dont seuls certains bureaux sont dans la circonscription choisie porte le
+  // même liseré, POINTILLÉ : elle compte dans l'agrégat pour ses bureaux et non en entier,
+  // et le plein contredirait le total d'inscrit·es affiché en dessous.
+  const st=f=>{ const multi=multiSel&&niveau==="commune", code=f.properties.__code;
+    const sel=multi&&selCodes.has(code), part=multi&&selParts.has(code);
+    const fs=fillStyle(), vif=sel||part;
+    return {fillColor:colOf(colValOf(f.properties)),color:vif?C.geosel:C.geoline,
+            weight:vif?2.6:fs.w,dashArray:part?"5 4":null,
+            fillOpacity:sel?Math.min(.95,fs.op+.2):(part?Math.min(.95,fs.op+.1):fs.op)}; };
   st.colOf=colOf; return st; }
 
 // Recoloration en place. `setStyle` repeint bien les enfants, mais ne touche pas à

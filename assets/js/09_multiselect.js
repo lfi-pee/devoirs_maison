@@ -5,31 +5,45 @@
 // recompose les pourcentages pondérés par les inscrits. Le SCORE MUNICIPALES est retiré
 // de l'agrégat (incomparable d'une commune à l'autre : tête de liste LFI ou non).
 // Pensée pour les GA à l'échelle interco / circo (territoires ruraux, beaucoup de communes).
-// ⚠ Sélectionner une circonscription entière n'est pas possible côté client : la maille
-// circonscription n'est pas bakée (scrutin national présidentiel) — à ajouter au pipeline.
-
-function clearSel(){ if(selCodes.size)selCodes.clear(); selBarSync(); }
+// « + Circo » ajoute une circonscription entière : ses communes entières, ET le MORCEAU
+// de chacune de ses communes partagées (values/_circo.json, baké bureau par bureau).
+function clearSel(){ if(selCodes.size||selParts.size){ selCodes.clear(); selParts.clear(); }
+  selBarSync(); }
 
 function repaintSel(){ if(layer&&layer.eachLayer)layer.eachLayer(l=>l.feature&&layer.resetStyle(l)); }
 
-function toggleSel(code){ if(selCodes.has(code))selCodes.delete(code); else selCodes.add(code);
+// Un clic déselectionne ce qui est sélectionné, en partie comme en entier, et sélectionne
+// en ENTIER ce qui ne l'est pas : la carte ne sait pas désigner un morceau de commune, et
+// un troisième état n'aurait pas de geste pour en sortir.
+function toggleSel(code){ if(selParts.has(code))selParts.delete(code);
+  else if(selCodes.has(code))selCodes.delete(code); else selCodes.add(code);
   repaintSel(); selBarSync(); }
+
+// Le tout absorbe la partie : une commune ajoutée en entier perd ses morceaux.
+function selEntiere(code){ selParts.delete(code); selCodes.add(code); }
 
 function selBarSync(){ const bar=$("selbar"); if(!bar)return;
   bar.style.display=multiSel?"flex":"none";
   if(window.__syncLayout)window.__syncLayout();
-  const n=selCodes.size;
-  $("selcount").textContent=n?`${n} commune${n>1?"s":""} sélectionnée${n>1?"s":""}`
-    :"Cliquez les communes à regrouper";
+  $("selcount").textContent=selLabel()||"Cliquez les communes à regrouper";
+  const n=selCodes.size+selParts.size;
   $("selview").disabled=n<1; $("selclear").disabled=n<1;
   syncCircoSelect(); }
+
+// Le décompte dit combien de communes ne sont là QUE pour leurs bureaux de la circo : sans
+// ça, « 15 communes » et un total d'inscrit·es trois fois trop petit pour Montpellier se
+// contrediraient sans que rien ne l'explique.
+function selLabel(){ const n=selCodes.size+selParts.size, p=selParts.size; if(!n)return "";
+  return `${n} commune${n>1?"s":""} sélectionnée${n>1?"s":""}`
+    +(p?` (dont ${p} partielle${p>1?"s":""})`:""); }
 
 // niveau commune-choroplèthe affiché = on est ENTRÉ dans un département (sommet de pile).
 const auNiveauCommunes=()=>{ const t=stack[stack.length-1]; return !!t&&t.niveau==="departement"; };
 
-// Sélecteur de circonscription : peuplé avec les circos du département courant (mapping
-// commune↔circo baké dans values/_circo.json, chargé paresseusement et mis en cache).
-// « + Circo » ajoute toutes les communes de la circo choisie à la sélection.
+// Sélecteur de circonscription : peuplé avec les circos du département courant
+// (values/_circo.json, chargé paresseusement et mis en cache). Chaque circo y porte `c`,
+// ses communes ENTIÈRES, et `p`, les valeurs du MORCEAU de chacune de ses communes
+// partagées — déjà sommées bureau par bureau côté pipeline.
 let circoData=null, circoDep=null;
 const circoLabel=c=>`${+c.split("-")[1]}ᵉ circonscription`;
 async function syncCircoSelect(){ const sel=$("selcirco"), btn=$("seladdcirco"); if(!sel)return;
@@ -47,7 +61,11 @@ async function syncCircoSelect(){ const sel=$("selcirco"), btn=$("seladdcirco");
 // (registre `insc_E24`, reconstitué du stock d'abstention en repli). On exclut tout *_M26
 // (score municipales retiré) et le contexte social (une médiane de médianes n'a pas de sens).
 function aggregateSelection(){
-  const os=[...selCodes].map(c=>curVals[c]).filter(Boolean); if(!os.length)return null;
+  const os=[...selCodes].map(c=>curVals[c]).filter(Boolean);
+  // Les morceaux entrent dans l'agrégat comme des zones à part entière : ils portent les
+  // mêmes clés, sommées sur leurs seuls bureaux (cf. prep_bake._baker_circonscriptions).
+  selParts.forEach(m=>m.forEach(v=>os.push(v)));
+  if(!os.length)return null;
   const inscOf=inscRef;
   // Voix à conquérir 2027 : extensif (voix, conjoncturels, portes, heures, km) → somme ;
   // intensif (abstention prédite, plancher, gauche prédite) → moyenne pondérée par les
@@ -83,20 +101,26 @@ function aggregateSelection(){
 }
 
 function openAggregate(){ const o=aggregateSelection(); if(!o)return;
-  const n=selCodes.size;
-  infoPanel(`${n} communes sélectionnées`,o,"multi",null); }
+  infoPanel(selLabel(),o,"multi",null); }
 
 (function(){ const mt=$("multitoggle"); if(!mt)return;
   mt.onclick=()=>{ multiSel=!multiSel; mt.setAttribute("aria-pressed",String(multiSel));
     document.body.classList.toggle("multi",multiSel);
-    if(!multiSel)selCodes.clear();
+    if(!multiSel){ selCodes.clear(); selParts.clear(); }
     repaintSel(); selBarSync(); };
-  $("selclear").onclick=()=>{ selCodes.clear(); repaintSel(); selBarSync(); };
+  $("selclear").onclick=()=>{ clearSel(); repaintSel(); };
   $("selview").onclick=openAggregate;
   $("selall").onclick=()=>{ if(!auNiveauCommunes()||!layer)return;
-    layer.eachLayer(l=>l.feature&&selCodes.add(l.feature.properties.__code));
+    layer.eachLayer(l=>l.feature&&selEntiere(l.feature.properties.__code));
     repaintSel(); selBarSync(); };
-  $("seladdcirco").onclick=()=>{ const c=$("selcirco").value; if(!c||!circoData)return;
-    (circoData[c]||[]).forEach(code=>{ if(curVals[code])selCodes.add(code); });
+  // Une commune entière déjà sélectionnée le reste : elle contient son morceau. Une
+  // commune dont on ajoute DEUX circos garde les deux morceaux, qui s'additionnent — et
+  // les ajouter toutes redonne exactement la commune.
+  $("seladdcirco").onclick=()=>{ const c=$("selcirco").value, d=circoData&&circoData[c];
+    if(!d)return;
+    (d.c||[]).forEach(code=>{ if(curVals[code])selEntiere(code); });
+    for(const code in (d.p||{})){ if(selCodes.has(code)||!curVals[code])continue;
+      let m=selParts.get(code); if(!m){ m=new Map(); selParts.set(code,m); }
+      m.set(c,d.p[code]); }
     repaintSel(); selBarSync(); };
   selBarSync(); })();

@@ -20,6 +20,12 @@ import indicators as ind
 import nuances
 import prep_admin
 import prep_immo
+from prep_elections import (
+    FICHIER_CIRCO_BUREAUX,
+    SEP_MORCEAU,
+    morceaux_de_commune,
+    parts_circo,
+)
 
 
 def _clean(o):
@@ -905,6 +911,100 @@ def _rattachement_region(da: Path):
     return lambda code: direct.get(str(code)) or dep2reg.get(_dep(str(code)))
 
 
+def _baker_circonscriptions(
+    da: Path,
+    com: dict[str, dict],
+    ordre: list[str],
+    fiables: set[str],
+    mob: dict[str, dict[str, dict]],
+) -> None:
+    """`values/_circo.json` : par circonscription, ses communes ENTIÈRES et les valeurs de
+    chaque MORCEAU de commune partagée.
+
+    La sélection « + Circo » du client versait la commune entière dans la circonscription
+    dès qu'elle la touchait. C'est faux pour 127 communes, qui portent 15 % du corps
+    électoral et touchent 256 des 577 circonscriptions — et le faux n'est pas marginal : la
+    8e de l'Hérault sortait à 244 606 inscrit·es, dont Montpellier en entier (169 505) là
+    où 18 de ses 138 bureaux seulement y votent (20 809) : son vrai total est 95 910. Le
+    rapport de force affiché aux législatives 2024 y passait de « gauche 30,6 / RN 18,5 » à
+    « gauche 24,7 / RN 27,0 » une fois les bureaux rendus à leur circonscription — la
+    circonscription que l'atlas donnait à gauche de douze points est RN de deux.
+
+    L'électoral des morceaux est sommé bureau par bureau en amont (prep_elections) ; on ne
+    recolle ici que ce qui n'existe pas au bureau."""
+    f_bur = da / FICHIER_CIRCO_BUREAUX
+    if not f_bur.exists():
+        print("  ⚠ circo_bureaux absent — pas de sélection par circonscription")
+        return
+    bur = pd.read_parquet(f_bur)
+    n_circo = bur.groupby("code_commune")["circonscription"].nunique()
+    partagees = set(n_circo[n_circo > 1].index)
+    out: dict[str, dict] = {}
+    for circ, g in bur.groupby("circonscription"):
+        out[str(circ)] = {
+            "c": sorted({c for c in g["code_commune"] if c not in partagees}),
+            "p": {},
+        }
+
+    f_part = da / "resultats_circo_partiel.parquet"
+    if not f_part.exists():
+        print("  ⚠ resultats_circo_partiel absent — communes partagées ignorées")
+        _ecrire("_circo", out)
+        return
+    vals = _valeurs_niveau(pd.read_parquet(f_part), ordre, fiables)
+
+    # Voix à conquérir : même découpage, appliqué au tableau par bureau du modèle. Les
+    # poids `w` sont ceux que `_mob_par_code` sait déjà déplier (ils servent à éclater un
+    # bureau sur ses quartiers), donc rien de particulier à faire ici.
+    mob_part: dict[str, dict] = {}
+    mb = _mobilisation(da) if mob else None
+    if mb is not None:
+        mb = mb.rename(columns={"bureau": "code_bv"})
+        poids = morceaux_de_commune(
+            mb[["code_bv", "code_commune"]],
+            dict(zip(bur["code_bv"], bur["circonscription"])),
+            parts_circo(bur),
+        )
+        if not poids.empty:
+            j = poids.merge(mb, on="code_bv", how="inner")
+            if not j.empty:
+                mob_part = _mob_par_code(j, j["cle"], j["w"])
+
+    servis = 0
+    for cle, v in vals.items():
+        circ, _, code = cle.partition(SEP_MORCEAU)
+        cible = out.get(circ)
+        if cible is None:
+            continue
+        # `rec` / `inscs` (frise de recomposition) et le contexte social restent dehors :
+        # la fiche agrégée les écarte déjà, et les servir doublerait le fichier pour rien.
+        o = {k: x for k, x in v.items() if isinstance(x, (int, float))}
+        o.update(mob_part.get(cle, {}))
+        base = com.get(code) or {}
+        insc_com = base.get(f"insc_{CLE_REGISTRE}")
+        insc_mor = o.get(f"insc_{CLE_REGISTRE}")
+        if insc_com and insc_mor is not None:
+            # Population, corps électoral potentiel et réservoir d'inscription n'existent
+            # qu'à la commune : le recensement ne descend pas au bureau de vote. On les
+            # rabat sur le morceau au prorata de son registre — une RÉPARTITION, pas une
+            # mesure, qui garde la somme des morceaux égale à la commune.
+            part = insc_mor / insc_com
+            for k in ("pop", "maj"):
+                if base.get(k) is not None:
+                    o[k] = round(base[k] * part)
+            if o.get("maj") is not None:
+                o["resinsc"] = o["maj"] - insc_mor
+        if base.get("reg") is not None:
+            o["reg"] = base["reg"]
+        cible["p"][code] = o
+        servis += 1
+    _ecrire("_circo", out)
+    print(
+        f"  ✓ values circonscriptions ({len(out)} circos, {len(partagees)} communes "
+        f"partagées, {servis} morceaux)"
+    )
+
+
 def ecrire_manifest(da: Path) -> None:
     """Inventaire de `data_app/`, relu depuis les fichiers eux-mêmes.
 
@@ -1014,6 +1114,9 @@ def main() -> None:
         )
         print("  ✓ références socio (nationale + régions)")
     print(f"  ✓ values commune (par département, {_ecrire_par_dep('commune', com)})")
+    # Après les communes : le morceau de commune emprunte à sa commune ce que le bureau de
+    # vote ne porte pas (population, corps électoral potentiel, région).
+    _baker_circonscriptions(DA, com, ordre, fiables, mob)
 
     iris = pd.read_parquet(DA / "socio_iris.parquet")
     iris_vals = {}

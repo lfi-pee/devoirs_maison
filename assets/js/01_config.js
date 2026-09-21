@@ -412,7 +412,14 @@ const cache=window.__seed||{}; let layer=null, stack=[], indicKey="conquerir", i
     curVals={}, busy=false, sousMode=SOUS_DEFAUT, lastInfo=null, panelDetails=[], enterColor=null;
 // Sélection multiple de communes (retour Elia, point 4) : en mode multi, un clic sur une
 // commune l'ajoute/retire de la sélection (fiche agrégée) au lieu d'y descendre.
-let multiSel=false; const selCodes=new Set();
+// Une commune peut n'être sélectionnée qu'en PARTIE : celles qui sont partagées entre
+// plusieurs circonscriptions (127 communes, 15 % du corps électoral) n'entrent dans une
+// circo que par les bureaux qui y votent. `selParts` porte ces morceaux, un par circo
+// ajoutée — Map(code commune → Map(clé de circo → valeurs du morceau)) : ajouter deux
+// circos d'une même ville additionne ses deux morceaux au lieu d'écraser l'un par l'autre,
+// et les ajouter toutes redonne la commune. Une commune est dans `selCodes` OU dans
+// `selParts`, jamais les deux (le tout absorbe la partie).
+let multiSel=false; const selCodes=new Set(), selParts=new Map();
 // entête cliquable d'une section : le détail est poussé dans le volet de droite (slide)
 const expBlock=(body,det)=>{ if(!det)return `<div class="exp">${body}</div>`;
   const i=panelDetails.length; panelDetails.push(det);

@@ -9,7 +9,6 @@ puis dans /home/veesion/hexagonal/data ; HEXAGONAL_DATA force le choix.
 
 from __future__ import annotations
 
-import collections
 import json
 import os
 from pathlib import Path
@@ -61,33 +60,6 @@ def _lire_csv(path: Path, **kw) -> pd.DataFrame:
     return pd.read_csv(path, dtype=str, **kw)
 
 
-def construire_circonscriptions(clean_elections: Path, values_dir: Path) -> None:
-    """Mappe communes ↔ circonscriptions législatives 2024 (sélection « circo entière »
-    côté client, retour Elia point 4). La maille circonscription est sinon absente de
-    l'app (scrutin présidentiel = national). Une commune à cheval (~0,4 %) est rattachée
-    à sa circo majoritaire mais reste listée dans chacune de ses circos."""
-    f = (
-        clean_elections
-        / "2024-legislatives-correspondances-bureau_de_vote-circonscription.csv"
-    )
-    if not f.exists():
-        print("   circo : correspondance introuvable — étape ignorée")
-        return
-    df = pd.read_csv(f, dtype=str).dropna(subset=["code_commune", "circonscription"])
-    circo_communes: dict[str, set[str]] = {}
-    for com, circ in zip(df["code_commune"], df["circonscription"]):
-        circo_communes.setdefault(circ, set()).add(com)
-    # Le client n'a besoin que de circo → communes (sélection « circo entière ») ; la maille
-    # circonscription est regroupée par département dans le navigateur (préfixe « dep- »).
-    data = {k: sorted(v) for k, v in sorted(circo_communes.items())}
-    values_dir.mkdir(parents=True, exist_ok=True)
-    (values_dir / "_circo.json").write_text(
-        json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    )
-    n_com = len({c for v in circo_communes.values() for c in v})
-    print(f"   circo : {len(circo_communes)} circonscriptions, {n_com} communes")
-
-
 def charger_cog() -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
     communes = _lire_csv(CLEAN / "cog" / "communes.csv")
     deps = _lire_csv(CLEAN / "cog" / "departements.csv")
@@ -125,9 +97,6 @@ def main() -> None:
     for niveau, df in resultats.items():
         df.to_parquet(OUT / f"resultats_{niveau}.parquet", index=False)
         print(f"   {niveau}: {len(df)} lignes")
-
-    print("→ Circonscriptions (mapping commune ↔ circo, sélection multiple)")
-    construire_circonscriptions(CLEAN / "elections", OUT / "values")
 
     print("→ Socio-économique (FILOSOFI IRIS + commune)")
     filosofi = CLEAN / "filosofi" / "disponible.csv"

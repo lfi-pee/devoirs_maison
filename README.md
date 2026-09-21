@@ -230,4 +230,4 @@ d'un site Pages. Versionnées dans le dépôt, elles sont servies par GitHub raw
 comme du temps de Streamlit. Une mise à jour des données est donc visible sans republier la
 page (cache CDN de raw : ~5 min). Seuls les intermédiaires volumineux et caches INSEE ne sont
 pas versionnés, régénérables via `prepare_data.py` + `prep_bake.py`. Voir DOCUMENTATION.md pour les limites connues (contours
-de bureaux de vote nationaux mais **approchés** — Voronoï data.gouv, rattachement commune↔circo approché, etc.).
+de bureaux de vote nationaux mais **approchés** — Voronoï data.gouv, etc.).

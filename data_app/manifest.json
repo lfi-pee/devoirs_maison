@@ -30,6 +30,7 @@
   ],
   "niveaux": [
     "bureau",
+    "circo_partiel",
     "commune",
     "departement",
     "france",

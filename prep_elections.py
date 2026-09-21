@@ -1035,18 +1035,151 @@ def _indicateurs(g: pd.DataFrame) -> dict:
     return res
 
 
-def _agreger(
-    bv: pd.DataFrame, cle_groupe: str, niveau: str, scrutin: Scrutin
+# Correspondance officielle bureau de vote → circonscription législative (découpage de
+# 2010, inchangé depuis). C'est le seul moyen de sommer une circonscription : 127 communes
+# sont partagées entre plusieurs d'entre elles, et ces 127 communes portent 15 % du corps
+# électoral. Montpellier relève de cinq circonscriptions, Paris de dix-huit.
+FICHIER_CIRCO = "2024-legislatives-correspondances-bureau_de_vote-circonscription.csv"
+# Table publiée pour les étapes suivantes : [code_bv, code_commune, circonscription,
+# insc_ref], codes de bureaux dans la numérotation des CONTOURS (crosswalk appliqué), la
+# même que celle des résultats et de mobilisation_bv. C'est elle qui permet à prep_bake de
+# redécouper la mobilisation comme prep_elections a redécoupé l'électoral.
+FICHIER_CIRCO_BUREAUX = "circo_bureaux.parquet"
+# Clé d'un morceau de commune : « 34-08|34172 » = la part de Montpellier qui vote dans la
+# 8e circonscription de l'Hérault. Le séparateur n'apparaît dans aucun code INSEE.
+SEP_MORCEAU = "|"
+
+
+def circonscription_par_bureau(dossier_clean: Path) -> pd.DataFrame:
+    """[code_bv, code_commune, circonscription], codes bâtis comme dans `_bureau_depuis_df`.
+
+    Vide si la correspondance manque : l'étape circonscription est alors simplement
+    absente, aucun autre niveau n'en dépend."""
+    f = dossier_clean / FICHIER_CIRCO
+    if not f.exists():
+        return pd.DataFrame(columns=["code_bv", "code_commune", "circonscription"])
+    df = pd.read_csv(f, dtype=str).dropna(subset=["code_commune", "circonscription"])
+    com = _canon_commune(df["code_commune"])
+    return pd.DataFrame(
+        {
+            "code_bv": com + "_" + _canon_suffix(df["bureau_de_vote"].astype(str)),
+            "code_commune": com,
+            "circonscription": df["circonscription"],
+        }
+    ).drop_duplicates("code_bv")
+
+
+def parts_circo(corr: pd.DataFrame) -> dict[str, dict[str, float]]:
+    """{commune partagée → {circonscription → part de ses inscrit·es}}.
+
+    Clé de répartition des bureaux que la correspondance ne place pas (cf.
+    morceaux_de_commune), lue sur la colonne `insc_ref` — le registre du scrutin de
+    référence des crosswalks. Le NOMBRE de bureaux ne conviendrait pas : dans une commune
+    partagée, les morceaux n'ont pas la même taille (la 8e circonscription de l'Hérault
+    prend 18 des 138 bureaux de Montpellier, soit 12 % de son électorat).
+
+    Les communes entières n'y sont pas : il n'y a rien à y découper."""
+    if corr.empty:
+        return {}
+    insc = corr.get("insc_ref")
+    d = corr.assign(
+        _i=pd.to_numeric(insc, errors="coerce").fillna(0.0)
+        if insc is not None
+        else 0.0
+    )
+    # Repli à un bureau = une voix là où le scrutin de référence ne couvre pas la commune :
+    # une clé grossière vaut mieux qu'une commune sans clé du tout.
+    par_com = d.groupby("code_commune")["_i"].transform("sum")
+    d["_i"] = d["_i"].where(par_com > 0, 1.0)
+    somme = d.groupby(["code_commune", "circonscription"])["_i"].sum()
+    out: dict[str, dict[str, float]] = {}
+    for (com, circ), v in somme.items():
+        out.setdefault(str(com), {})[str(circ)] = float(v)
+    return {
+        com: {c: v / sum(p.values()) for c, v in p.items()}
+        for com, p in out.items()
+        if len(p) > 1
+    }
+
+
+def morceaux_de_commune(
+    bureaux: pd.DataFrame,
+    circo_de: dict[str, str],
+    parts: dict[str, dict[str, float]],
 ) -> pd.DataFrame:
-    cols_somme = [
-        "inscrits",
-        "votants",
-        "exprimes",
-        "inscrits_nuances",
-        "exprimes_nuances",
-        *FAMILLES,
-    ]
-    grp = bv.groupby(cle_groupe, as_index=False)[cols_somme].sum()
+    """Poids [code_bv, cle, w] découpant les communes PARTAGÉES en morceaux de circonscription.
+
+    Un bureau que la correspondance place va en entier (w = 1) dans sa circonscription.
+    Ceux qu'elle ne place pas sont répartis sur les circonscriptions de leur commune au
+    prorata de `parts`, ce qui garde l'invariant « Σ des morceaux d'une commune = la
+    commune » quel que soit le scrutin. Il en reste toujours : la correspondance porte la
+    numérotation de 2024, et les scrutins antérieurs à la renumérotation ne s'y raccordent
+    pas dans les communes recodées. Sans répartition, la présidentielle 2022 perdait
+    237 168 inscrit·es des communes partagées (3,2 %), concentrés sur une dizaine de villes
+    — Bordeaux en entier, Annecy, Grenoble.
+
+    `bureaux` : [code_bv, code_commune]. Les communes entières en sont écartées ici :
+    leur circonscription reprend telles quelles les valeurs communales, déjà exactes."""
+    sub = bureaux.loc[
+        bureaux["code_commune"].isin(parts), ["code_bv", "code_commune"]
+    ].drop_duplicates("code_bv")
+    vide = pd.DataFrame(columns=["code_bv", "cle", "w"])
+    if sub.empty:
+        return vide
+    place = sub["code_bv"].map(circo_de)
+    connu = place.notna()
+    directs = pd.DataFrame(
+        {
+            "code_bv": sub.loc[connu, "code_bv"],
+            "cle": place[connu] + SEP_MORCEAU + sub.loc[connu, "code_commune"],
+            "w": 1.0,
+        }
+    )
+    reste = sub.loc[~connu]
+    repartis = pd.DataFrame(
+        [
+            (code, f"{circ}{SEP_MORCEAU}{com}", w)
+            for code, com in zip(reste["code_bv"], reste["code_commune"])
+            for circ, w in parts[com].items()
+        ],
+        columns=["code_bv", "cle", "w"],
+    )
+    return pd.concat([d for d in (directs, repartis) if not d.empty], ignore_index=True)
+
+
+COLS_SOMME = [
+    "inscrits",
+    "votants",
+    "exprimes",
+    "inscrits_nuances",
+    "exprimes_nuances",
+    *FAMILLES,
+]
+
+
+def _agreger(
+    bv: pd.DataFrame,
+    cle_groupe: str,
+    niveau: str,
+    scrutin: Scrutin,
+    poids: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    """Somme les comptages des bureaux par groupe, puis recalcule les indicateurs dessus.
+
+    `poids` (facultatif) : table [code_bv, <cle_groupe>, w] par laquelle un bureau compte
+    pour une FRACTION de plusieurs groupes. C'est ce qui permet d'agréger un morceau de
+    commune (cf. morceaux_de_commune). Sans elle, chaque bureau appartient au seul groupe
+    que porte sa propre ligne."""
+    if poids is None:
+        grp = bv.groupby(cle_groupe, as_index=False)[COLS_SOMME].sum()
+    else:
+        m = poids.merge(bv, on="code_bv", how="inner")
+        if m.empty:
+            return pd.DataFrame()
+        m[COLS_SOMME] = m[COLS_SOMME].mul(m["w"], axis=0)
+        # `_indicateurs` compte des personnes et tronque par `int()` : on referme les
+        # fractions avant lui, sans quoi chaque total perdrait jusqu'à une unité.
+        grp = m.groupby(cle_groupe, as_index=False)[COLS_SOMME].sum().round()
     lignes = [
         {
             "niveau": niveau,
@@ -1162,8 +1295,28 @@ def construire_resultats(
         )
     listes_lfi = charger_listes_lfi(listes_lfi_fichier) if listes_lfi_fichier else set()
     com2dep, dep2reg = rattachement_communal(communes)
+    # Circonscriptions : la correspondance porte la numérotation des fichiers de 2024, à
+    # laquelle il faut appliquer le MÊME remappage qu'aux scrutins récents. Sans lui, une
+    # commune renumérotée depuis n'a plus une seule clé en commun avec ses propres
+    # résultats — Bordeaux et ses 138 bureaux, Grenoble, Annecy, 39 bureaux de Paris : à
+    # eux dix, 6 % de l'électorat des communes partagées. Avec lui, les législatives 2024
+    # se raccordent à 100 % et les européennes à 99,97 %. Les scrutins antérieurs gardent
+    # la correspondance brute, qui est leur numérotation partout où elle n'a pas changé.
+    corr = circonscription_par_bureau(dossier_clean)
+    corr["insc_ref"] = corr["code_bv"].map(
+        _inscrits_par_bureau(dossier_clean, CROSSWALK_REF_NOUVEAU)
+    )
+    parts = parts_circo(corr)
+    circo_brut = dict(zip(corr["code_bv"], corr["circonscription"]))
+    corr_recode = corr.assign(
+        code_bv=_remapper(corr["code_bv"], crosswalk_recent, recodees)
+    ).drop_duplicates("code_bv")
+    circo_recode = dict(zip(corr_recode["code_bv"], corr_recode["circonscription"]))
+    if sortie is not None and not corr_recode.empty:
+        corr_recode.to_parquet(sortie / FICHIER_CIRCO_BUREAUX, index=False)
     accum: dict[str, list[pd.DataFrame]] = {
-        n: [] for n in ("bureau", "commune", "departement", "region", "france")
+        n: []
+        for n in ("bureau", "commune", "departement", "region", "france", "circo_partiel")
     }
     for scrutin in lister_scrutins(dossier_clean):
         try:
@@ -1190,7 +1343,22 @@ def construire_resultats(
             )
             accum["region"].append(_agreger(bv, "code_region", "region", sc))
             accum["france"].append(_agreger(bv, "france", "france", sc))
+            # Morceaux de communes partagées : le seul niveau qu'on ne puisse pas déduire
+            # des communes, et celui sans lequel une circonscription ne se somme pas.
+            accum["circo_partiel"].append(
+                _agreger(
+                    bv,
+                    "cle",
+                    "circo_partiel",
+                    sc,
+                    morceaux_de_commune(
+                        bv, circo_recode if recent else circo_brut, parts
+                    ),
+                )
+            )
             print(f"  ✓ {sc.cle}: {len(bv)} bureaux")
     return {
-        n: pd.concat(parts, ignore_index=True) for n, parts in accum.items() if parts
+        n: pd.concat(pleins, ignore_index=True)
+        for n, tables in accum.items()
+        if (pleins := [d for d in tables if not d.empty])
     }

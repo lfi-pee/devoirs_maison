@@ -22,9 +22,10 @@ niveau, jusqu'au bureau de vote et à l'IRIS.
 France → Région → Département → Commune → IRIS / Bureau de vote
 ```
 
-> L'échelle **circonscription législative** a été retirée : sans pertinence pour une
-> présidentielle (scrutin national), elle créait en outre le problème des communes à cheval
-> sur deux circos. Le département descend désormais directement aux communes.
+> L'échelle **circonscription législative** n'est pas un niveau de la carte : sans
+> pertinence pour une présidentielle (scrutin national), elle n'a pas non plus de contour
+> propre dans l'atlas. Le département descend directement aux communes. Une circonscription
+> s'obtient en revanche **en sélection** — voir « Regrouper des communes » ci-dessous.
 
 On clique sur une entité pour descendre d'un niveau. Un fil d'Ariane permet de remonter.
 
@@ -32,6 +33,33 @@ Sous la commune, la vue servie par défaut est le **quartier (IRIS)** : c'est la
 lecture du terrain (revenu, sociologie, logement — et désormais l'électoral estimé), là où
 le bureau de vote est une maille d'**organisation** du travail militant. La bascule
 **🗳️ Bureaux de vote** reste à un clic, en mode avancé.
+
+### Regrouper des communes (et lire une circonscription)
+
+Le bouton **Multi-communes** fait d'un clic sur la carte un ajout à une sélection plutôt
+qu'une descente d'un niveau. La **fiche agrégée** somme alors les voix, les registres et les
+effectifs de la sélection, et recompose les pourcentages pondérés par les inscrit·es. Le
+score des municipales en est retiré (une tête de liste insoumise ici, pas là : le chiffre
+n'est pas comparable d'une commune à l'autre), ainsi que le contexte social (une médiane de
+médianes ne veut rien dire).
+
+Le sélecteur **+ Circo**, affiché dès qu'on est entré dans un département, ajoute d'un coup
+une circonscription législative entière. **Une commune peut être partagée entre plusieurs
+circonscriptions** : 127 le sont, et elles portent **15 % du corps électoral** — Montpellier
+relève de cinq circonscriptions, Paris de dix-huit, et **256 des 577 circonscriptions** en
+contiennent au moins une. Ces communes n'entrent donc dans une circonscription **que par
+les bureaux de vote qui y votent** : la correspondance officielle bureau ↔ circonscription
+(législatives 2024) les découpe en amont, et chaque morceau est sommé bureau par bureau.
+Sur la carte, une commune ainsi partagée porte un liseré **pointillé** et non plein, et le
+décompte de la barre de sélection dit combien de communes ne sont là qu'en partie.
+
+> Ce découpage a été ajouté après coup. Auparavant, « + Circo » versait la commune
+> **entière** dans chaque circonscription qu'elle touchait. La 8ᵉ circonscription de
+> l'Hérault sortait ainsi à **244 606 inscrit·es** — dont Montpellier en entier, 169 505,
+> quand **18 de ses 138 bureaux** seulement y votent (20 809 inscrit·es) — pour **95 910**
+> réels. Le rapport de force affiché aux législatives 2024 y était « gauche 30,6 % /
+> RN 18,5 % » ; il est en réalité « gauche 24,7 % / RN 27,0 % ». Les dix-huit
+> circonscriptions de Paris renvoyaient toutes le même agrégat : Paris en entier.
 
 ## Ce qui est montré à chaque granularité
 
@@ -992,6 +1020,25 @@ Tout provient du dépôt **hexagonal** (agrégation France insoumise) :
   à 31,8 points). Le défaut est dans le décompte amont, pas dans la ventilation, et rien
   ne permet de trancher lequel des deux chiffres est faux : on ne fabrique donc rien. La
   commune, elle, boucle.
+- Le **découpage d'une commune partagée entre plusieurs circonscriptions** (cf. « Regrouper
+  des communes ») repose sur la correspondance officielle bureau ↔ circonscription des
+  **législatives 2024**, et laisse deux résidus. **Le premier est la numérotation** : la
+  correspondance porte celle de 2024, et un bureau qu'elle ne place pas — création
+  postérieure, ou commune renumérotée depuis le millésime des contours — est réparti sur
+  les circonscriptions de sa commune au prorata des inscrit·es localisés. C'est une
+  répartition, pas une mesure ; elle garde la somme des morceaux égale à la commune. Elle
+  ne porte sur **rien** aux législatives 2024, **0,03 %** de l'électorat des communes
+  partagées aux européennes 2024, **1,4 %** aux municipales 2026, et **3,2 %** à la
+  présidentielle 2022, où elle se concentre sur une dizaine de villes renumérotées
+  (Bordeaux en entier, Annecy, Grenoble). **Le second est le recensement** : population,
+  corps électoral potentiel et réservoir d'inscription n'existent qu'à la commune — l'INSEE
+  ne descend pas au bureau de vote — et sont rabattus sur le morceau au prorata de son
+  registre. Un morceau de ville dont la sociologie s'écarte de sa commune porte donc un
+  réservoir d'inscription lissé, quand ses chiffres électoraux, eux, sont exacts. Le
+  découpage lui-même est contrôlé par quatre invariants rejouables
+  ([validation_circo.py](validation_circo.py)) : les morceaux d'une commune la redonnent,
+  chaque morceau est la somme de ses bureaux aux législatives 2024, un département conserve
+  son électorat, et aucune circonscription n'en double une autre.
 - **Mayotte** n'a aucune moyenne régionale de référence (le recensement infracommunal ne
   la couvre pas) : ses fiches ne se comparent qu'à la France, et le disent.
 - **Paris, Lyon et Marseille** (codés par secteur/arrondissement dans les bases infracommunales
