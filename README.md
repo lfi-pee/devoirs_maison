@@ -231,3 +231,26 @@ comme du temps de Streamlit. Une mise à jour des données est donc visible sans
 page (cache CDN de raw : ~5 min). Seuls les intermédiaires volumineux et caches INSEE ne sont
 pas versionnés, régénérables via `prepare_data.py` + `prep_bake.py`. Voir DOCUMENTATION.md pour les limites connues (contours
 de bureaux de vote nationaux mais **approchés** — Voronoï data.gouv, etc.).
+
+
+## Image pour Canvass
+
+Le workflow `Container` construit une image Linux amd64 autonome contenant la page et
+`data_app/`, puis la publie sur `ghcr.io/lfi-pee/devoirs_maison` après ses tests.
+Les pushes sur `master` publient le tag `master`, les tags `v*` publient leur nom,
+et chaque publication reçoit aussi un tag `sha-<commit complet>`. Le digest affiché
+par `docker push` permet de figer une version en production. Les pull requests
+construisent et testent l'image sans la publier. Le package GHCR doit rester privé.
+
+```bash
+docker build -t atlas:local .
+```
+
+L'image écoute sur le port **8080** et expose `/index.html`, `/data/*` et `/healthz`.
+Elle tourne sans root, en lecture seule, avec toutes les capacités Linux retirées.
+Son réseau doit être interne, sans port publié sur l'hôte : l'authentification est
+assurée par Canvass avant que son Caddy transmette une requête au conteneur.
+
+Le build Docker utilise `--base /atlas/data --suggestion /atlas/suggestion`.
+Le workflow `Pages` et le build par défaut conservent leurs URL et le formulaire
+actuels ; construire l'image ne remplace pas le site GitHub Pages.

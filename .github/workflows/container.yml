@@ -1,0 +1,84 @@
+name: Container
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: container-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check the existing Pages build
+        run: python build_site.py --sortie /tmp/pages-site
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=ref,event=pr
+            type=sha,format=long
+          flavor: latest=false
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+      - name: Test the image with production restrictions
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          image="$(printf '%s\n' "$IMAGE_TAGS" | head -n 1)"
+          docker run -d --name atlas-test --read-only --cap-drop ALL \
+            --security-opt no-new-privileges:true "$image"
+          trap 'docker logs atlas-test; docker rm -f atlas-test' EXIT
+          for i in $(seq 1 30); do
+            if docker exec atlas-test wget -q -O /dev/null http://127.0.0.1:8080/healthz; then
+              break
+            fi
+            sleep 1
+          done
+          docker exec atlas-test wget -q -O - http://127.0.0.1:8080/index.html > /tmp/atlas.html
+          grep -q '/atlas/data' /tmp/atlas.html
+          grep -q '/atlas/suggestion' /tmp/atlas.html
+          docker exec atlas-test wget -q -O /dev/null http://127.0.0.1:8080/data/values/region.json
+          if docker exec atlas-test wget -q -O /dev/null http://127.0.0.1:8080/data/values/; then
+            exit 1
+          fi
+          if docker exec atlas-test wget -q -O /dev/null http://127.0.0.1:8080/build_site.py; then
+            exit 1
+          fi
+      - uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish tested image
+        if: github.event_name != 'pull_request'
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          while IFS= read -r tag; do
+            docker push "$tag"
+          done <<< "$IMAGE_TAGS"

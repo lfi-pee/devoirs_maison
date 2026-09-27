@@ -1,0 +1,12 @@
+*
+!Dockerfile
+!docker/
+!docker/Caddyfile
+!build_site.py
+!build_map.py
+!prep_seed.py
+!map.html
+!assets/
+!assets/**
+!data_app/
+!data_app/**
