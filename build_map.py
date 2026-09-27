@@ -31,7 +31,7 @@ SEED_MARK = "/*__SEED__*/{}"
 # @cache : l'assemblage relit tous les modules et simplifie les contours de la vue France
 # (~0,4 s). Payé une fois à la PUBLICATION (build_site.py), jamais par un visiteur.
 @cache
-def assemble_map(base: str | None = None) -> str:
+def assemble_map(base: str | None = None, suggestion: str | None = None) -> str:
     css = (ASSETS / "map.css").read_text(encoding="utf-8")
     parts = [
         f.read_text(encoding="utf-8") for f in sorted((ASSETS / "js").glob("*.js"))
@@ -47,6 +47,8 @@ def assemble_map(base: str | None = None) -> str:
     html = html.replace(CSS_MARK, css).replace(JS_MARK, js)
     if base is not None:
         html = html.replace("__BASE__", base)
+    if suggestion is not None:
+        html = html.replace("__SUGGESTION__", suggestion)
     return html
 
 

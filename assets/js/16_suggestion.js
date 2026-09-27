@@ -5,12 +5,11 @@
 // déguisé en formulaire — il fallait un logiciel de courriel configuré, et sur un webmail
 // il ne se passait rien du tout. Un formulaire qui n'envoie pas n'est pas un formulaire.
 //
-// Le site est statique (GitHub Pages) : il n'a pas de serveur à qui poster. On passe donc
-// par un RELAIS de formulaires, FormSubmit — POST en JSON, réponse en JSON, aucun compte ni
-// clé à gérer. C'est un tiers, et il faut le dire : le message et le contexte transitent
-// par lui avant d'arriver dans la boîte de l'équipe. C'est le prix d'un envoi réel depuis
-// une page sans serveur ; le jour où le PEE héberge son propre point d'entrée, il n'y a que
-// SUGG_ENVOI à changer.
+// Servi par canvass, l'atlas poste à canvass, qui envoie lui-même le courriel, signé du compte
+// connecté : aucun tiers, et rien à saisir sur soi. Servi en page statique (GitHub Pages, tant
+// qu'il sert), il n'a pas de serveur à qui poster et passe par un RELAIS de formulaires,
+// FormSubmit — un tiers, que le panneau nomme. Les deux reçoivent la même charge et répondent
+// `{success, message}` : seuls le point d'entrée, l'en-tête CSRF et la notice changent.
 //
 // Le relais ne ment pas quand il ne peut pas délivrer : tant que le formulaire n'est pas
 // activé (un clic, une seule fois, dans le courriel d'activation reçu à l'adresse de
@@ -28,7 +27,18 @@ const SUGG_ADRESSE="etudes-electorales@franceinsoumise.org";
 // qui l'écrit pour qui préfère son propre courriel. FormSubmit fournit après activation un
 // ALIAS opaque (`formsubmit.co/ajax/<alias>`) qui évite de l'exposer aux moissonneurs : le
 // remplacer ici quand on l'aura, le reste ne bouge pas.
-const SUGG_ENVOI=`https://formsubmit.co/ajax/${SUGG_ADRESSE}`;
+// Point d'entrée : `build_site.py --suggestion` y pose l'URL de canvass ; sans lui, le marqueur
+// reste en place et l'envoi passe par le relais.
+const SUGG_POINT="__SUGGESTION__";
+const SUGG_CANVASS=!SUGG_POINT.startsWith("__");
+const SUGG_ENVOI=SUGG_CANVASS?SUGG_POINT:`https://formsubmit.co/ajax/${SUGG_ADRESSE}`;
+// canvass refuse un POST sans le jeton CSRF qu'il dépose dans le cookie XSRF-TOKEN. Le relais,
+// lui, n'a pas à le voir.
+function suggEntetes(){
+  const h={"Content-Type":"application/json","Accept":"application/json"};
+  const x=SUGG_CANVASS&&document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/);
+  if(x)h["X-XSRF-TOKEN"]=decodeURIComponent(x[1]);
+  return h; }
 // Les sujets ne sont pas décoratifs : ils préfixent l'objet du courriel, donc ils trient la
 // boîte de réception. Ordre = celui de l'utilité d'un retour (une donnée fausse d'abord).
 const SUGG_SUJETS=["Une donnée qui paraît fausse",
@@ -115,12 +125,14 @@ function suggPanneau(){
       `<label for="sgmsg">Votre message</label>`+
       `<textarea id="sgmsg" rows="6" placeholder="Ce que vous avez vu, ce que vous attendiez, `+
         `et — si c'est un chiffre — celui que vous connaissez et sa source."></textarea>`+
+      // Sous canvass, le compte connecté signe le message : inutile de se présenter.
+      (SUGG_CANVASS?"":
       `<label for="sgqui">Vous êtes <span class="sgopt">(facultatif : nom, groupe d'action, `+
         `département)</span></label>`+
       `<input id="sgqui" type="text" placeholder="ex. GA Saint-Denis centre"/>`+
       `<label for="sgmail">Votre adresse <span class="sgopt">(facultatif — sans elle, `+
         `l'équipe ne peut pas vous répondre)</span></label>`+
-      `<input id="sgmail" type="email" placeholder="vous@exemple.fr"/>`+
+      `<input id="sgmail" type="email" placeholder="vous@exemple.fr"/>`)+
       // Piège à robots : un champ que personne ne voit et que seuls les automates
       // remplissent. Le relais jette le message quand il est rempli.
       `<input id="sghoney" type="text" name="_honey" tabindex="-1" autocomplete="off" `+
@@ -145,11 +157,14 @@ function suggPanneau(){
         `<a id="sgmailto" class="sgbtn" href="#">✉️ Ouvrir mon logiciel de courriel</a>`+
         `<button id="sgcopy" class="sgbtn" type="button">📋 Copier le message</button>`+
       `</div></div>`+
-    `<p class="hypnote"><b>Où va ce message.</b> Le site étant une page statique sans `+
-    `serveur, l'envoi passe par un <b>relais de formulaires</b> (formsubmit.co) qui le `+
-    `transmet par courriel à l'équipe : votre message et le contexte ci-dessus transitent `+
-    `donc par ce tiers. Votre adresse n'est envoyée que si vous la donnez, et sert `+
-    `uniquement à vous répondre.</p>`; }
+    `<p class="hypnote"><b>Où va ce message.</b> `+(SUGG_CANVASS
+      ? `canvass le transmet par courriel à l'équipe, sans passer par un tiers, avec le nom `+
+        `et l'adresse de votre compte : ils servent uniquement à vous répondre.</p>`
+      : `Le site étant une page statique sans `+
+        `serveur, l'envoi passe par un <b>relais de formulaires</b> (formsubmit.co) qui le `+
+        `transmet par courriel à l'équipe : votre message et le contexte ci-dessus transitent `+
+        `donc par ce tiers. Votre adresse n'est envoyée que si vous la donnez, et sert `+
+        `uniquement à vous répondre.</p>`); }
 
 // Copie : `navigator.clipboard` en contexte sécurisé (le site est servi en HTTPS), repli
 // par textarea + execCommand là où l'API manque ou est refusée.
@@ -179,12 +194,11 @@ async function suggEnvoyer(){
   note.className="sgnote"; note.textContent="";
   let ok=false, motif="";
   try{
-    const rep=await fetch(SUGG_ENVOI,{method:"POST",
-      headers:{"Content-Type":"application/json","Accept":"application/json"},
+    const rep=await fetch(SUGG_ENVOI,{method:"POST",headers:suggEntetes(),
       body:JSON.stringify(suggCharge())});
     const j=await rep.json().catch(()=>({}));
     ok=String(j.success)==="true";
-    motif=j.message||`réponse ${rep.status} du relais`;
+    motif=j.message||`réponse ${rep.status} du ${SUGG_CANVASS?"serveur":"relais"}`;
   }catch(e){ motif="le réseau n'a pas répondu ("+e+")"; }
   bouton.disabled=false; bouton.textContent="✉️ Envoyer le message";
   if(ok){

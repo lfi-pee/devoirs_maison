@@ -34,6 +34,8 @@ AMORCE_MINI = 100_000
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--base", default=BASE_DEFAUT, help="racine des données servies")
+    p.add_argument("--suggestion", help="point d'envoi du formulaire « Suggérer » (canvass) ; "
+                   "sans lui, relais formsubmit.co")
     p.add_argument("--sortie", type=pathlib.Path, default=RACINE / "_site")
     args = p.parse_args()
 
@@ -45,7 +47,7 @@ def main() -> None:
     args.sortie.mkdir(parents=True)
     (args.sortie / ".nojekyll").touch()  # sinon Pages ignore les fichiers en `_`
     page = args.sortie / "index.html"
-    page.write_text(assemble_map(args.base), encoding="utf-8")
+    page.write_text(assemble_map(args.base, args.suggestion), encoding="utf-8")
     print(f"{page} : {page.stat().st_size / 1024:.0f} Ko")
     print(f"base : {args.base}")
 

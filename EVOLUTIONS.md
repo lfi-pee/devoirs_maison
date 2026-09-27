@@ -795,3 +795,17 @@ circonscriptions.
 | ✅ Vérifié | **Quatre invariants, rejouables : [validation_circo.py](validation_circo.py).** (1) Les morceaux d'une commune redonnent la commune, effectif par effectif et scrutin par scrutin — **127 sur 127**, écart maximal **0,01 %** (un `lfiv_M26` à Nice). (2) Chaque morceau est exactement la somme de ses bureaux, vérifié aux **législatives 2024**, le seul scrutin que la correspondance couvre à 100 % et donc le seul où le découpage se lit sans aucune répartition — **309 sur 309**, en repartant de `resultats_bureau.parquet`. (3) Un département conserve son électorat : la somme de ses circonscriptions est la somme de ses communes — **107 sur 107**, la propriété même qui était violée. (4) Aucune circonscription n'en double une autre. |
 | ✅ Vérifié | **Les fonctions de sélection réellement expédiées rejouées dans Chromium**, tranches prises dans `09_multiselect.js` et gestionnaire « + Circo » déclenché par son propre `<select>`, sur les données réellement servies : la 8ᵉ de l'Hérault sort à **95 910 inscrit·es** et « 15 communes sélectionnées (dont 1 partielle) », les cinq morceaux de Montpellier resomment la ville à l'unité près (inscrits, votants, voix LFI, voix de gauche, majeur·es, population), une commune ajoutée en entier perd son morceau, un clic le retire, et une circonscription sans commune partagée n'en fabrique aucun. |
 | ⚠️ Assumé | **Le découpage est celui de 2024 pour tous les scrutins.** Le tracé des circonscriptions n'a pas bougé depuis 2010, mais la carte des bureaux, elle, bouge à chaque scrutin : lire la présidentielle 2022 « par circonscription de 2024 » est exact partout où les bureaux n'ont pas été redécoupés, approché ailleurs — c'est la même limite que la répartition ci-dessus, et elle est chiffrée. |
+
+## Servi par canvass, le formulaire n'a plus à passer par un tiers
+
+> Le relais `formsubmit.co` était le prix d'une page statique sans serveur à qui poster.
+> Servi par canvass, derrière la connexion Action Populaire, l'atlas a un serveur : les
+> suggestions des militant·es n'avaient plus de raison de sortir chez un tiers.
+
+| Statut | Détail |
+| ------ | ------ |
+| ✅ Fait | **`build_site.py --suggestion /atlas/suggestion`** pose le point d'entrée dans la page ([16_suggestion.js](assets/js/16_suggestion.js), marqueur `__SUGGESTION__`, comme `__BASE__`). canvass reçoit la **même charge** que le relais et répond `success: "true"` quand le message est parti : succès, échec et repli s'affichent comme avant. |
+| ✅ Fait | **Le compte signe le message.** canvass joint le nom et l'adresse du compte connecté, en répondre-à : les champs « Vous êtes » et « Votre adresse » disparaissent, et la notice dit où va le message — « canvass le transmet par courriel à l'équipe, sans passer par un tiers ». |
+| ✅ Fait | **Jeton CSRF.** La requête porte l'en-tête `X-XSRF-TOKEN` tiré du cookie `XSRF-TOKEN` de canvass, qui refuse sinon le `POST` (419). Il n'est jamais envoyé au relais. |
+| ⚠️ Assumé | **La page statique garde le relais** tant que GitHub Pages sert : sans `--suggestion`, rien ne change. Il disparaît avec elle. |
+| ✅ Vérifié | **De bout en bout dans Chromium**, page construite avec `--suggestion` et servie par canvass après une vraie connexion : champs d'identité absents, notice canvass, `POST` avec `X-XSRF-TOKEN` → `200 {"success":"true"}`, « Message envoyé », bouton neutralisé, aucune erreur JS sur l'atlas. Le courriel journalisé part à `etudes-electorales@franceinsoumise.org`, en répondre-à le compte, contexte (zone, indicateur, élections, permalien) ligne à ligne. |

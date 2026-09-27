@@ -597,18 +597,28 @@ corrige pas sans savoir où et lequel, et c'est précisément ce qu'on ne pense 
 
 **Le formulaire envoie vraiment.** Sa première version se contentait de composer un
 `mailto:` : c'était un lien déguisé en formulaire — il fallait un logiciel de courriel
-configuré, et sur un webmail il ne se passait rien du tout. L'atlas étant une page statique
-sans serveur à qui poster, l'envoi passe par un **relais de formulaires**
-(`formsubmit.co`) : `POST` en JSON, réponse en JSON, ni compte ni clé à gérer. **C'est un
-tiers**, et la notice du panneau l'écrit : le message et le contexte transitent par lui
-avant d'arriver dans la boîte de l'équipe. C'est le prix d'un envoi réel depuis une page
-sans serveur ; la constante `SUGG_ENVOI` est le seul point à changer le jour où le PEE
-héberge son propre point d'entrée.
+configuré, et sur un webmail il ne se passait rien du tout.
 
-Le champ **Message** part sous son propre nom, et chaque ligne de contexte sous le sien
-(`_template: "table"`) : le courriel reçu est un tableau qui se lit d'un coup d'œil, pas un
-bloc de texte. L'adresse facultative est envoyée dans le champ `email`, que le relais met en
-**répondre-à**.
+**Servi par canvass**, l'atlas poste à canvass (`/atlas/suggestion`, posé à la construction
+par `build_site.py --suggestion`), qui envoie lui-même le courriel à l'équipe, avec le nom et
+l'adresse du compte connecté en répondre-à : **aucun tiers**, et les champs « Vous êtes » et
+« Votre adresse » disparaissent. La requête porte le jeton CSRF que canvass dépose dans le
+cookie `XSRF-TOKEN` (en-tête `X-XSRF-TOKEN`), faute de quoi canvass la refuse.
+
+**En page statique** (GitHub Pages, sans `--suggestion`), il n'y a pas de serveur à qui
+poster : l'envoi passe par un **relais de formulaires** (`formsubmit.co`) : `POST` en JSON,
+réponse en JSON, ni compte ni clé à gérer. **C'est un tiers**, et la notice du panneau
+l'écrit : le message et le contexte transitent par lui avant d'arriver dans la boîte de
+l'équipe. Il disparaîtra avec la page statique.
+
+Les deux reçoivent la même charge, et `success` vaut `"true"` quand le message est parti :
+seuls le point d'entrée, l'en-tête CSRF et la notice changent côté atlas.
+
+Le champ **Message** part sous son propre nom, et chaque ligne de contexte sous le sien : le
+courriel reçu se lit ligne à ligne, pas en bloc — un tableau par le relais
+(`_template: "table"`), une ligne « Clé : valeur » par canvass, sous le nom du compte. Sur la
+page statique, l'adresse facultative est envoyée dans le champ `email`, que le relais met en
+**répondre-à** ; canvass, lui, y met le compte connecté.
 
 **Rien n'est annoncé comme envoyé qui ne l'ait été.** Le relais répond
 `{"success": "true" | "false", "message": …}` — `success` est une *chaîne*, pas un booléen.
@@ -622,7 +632,7 @@ montrer d'emblée redirait « ce formulaire n'envoie pas vraiment ». Trois cas 
 | relais non activé | la phrase du relais, **traduite** : une activation est attendue côté équipe ; le repli s'ouvre |
 | réseau muet / service disparu | le motif technique, et le repli s'ouvre |
 
-**Une action est attendue une seule fois** : au tout premier message, `formsubmit.co` envoie
+**Une action est attendue une seule fois, pour la page statique** : au tout premier message, `formsubmit.co` envoie
 un courriel d'activation à l'adresse de destination. Tant que ce lien n'est pas cliqué, rien
 n'est délivré — et le formulaire le dit plutôt que de faire croire à un envoi.
 

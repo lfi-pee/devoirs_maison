@@ -137,19 +137,19 @@ de la vue — ce qu'une personne qui signale un chiffre faux n'a aucune raison d
 recopier, et sans quoi le retour n'est pas exploitable. Ce contexte est affiché dans le
 panneau tel qu'il partira.
 
-Le site est une page statique, sans serveur à qui poster : l'envoi passe donc par un
-**relais de formulaires** (`formsubmit.co`), qui transmet le message par courriel. C'est un
-tiers, et la notice du panneau le dit — le message et le contexte transitent par lui. Le
-jour où le PEE héberge son propre point d'entrée, seule la constante `SUGG_ENVOI` change.
-L'adresse de la personne n'est envoyée que si elle la donne, et sert uniquement à lui
-répondre.
+Servi par canvass (`build_site.py --suggestion /atlas/suggestion`), le formulaire poste à
+canvass, qui envoie lui-même le courriel à l'équipe, avec le nom et l'adresse du compte
+connecté : aucun tiers, et rien à saisir sur soi. En page statique (GitHub Pages, sans
+`--suggestion`), il n'a pas de serveur à qui poster et passe par un **relais de formulaires**
+(`formsubmit.co`) : un tiers, que la notice du panneau nomme ; l'adresse de la personne n'est
+alors envoyée que si elle la donne, et sert uniquement à lui répondre.
 
 Le relais n'annonce jamais un envoi qu'il n'a pas fait : quand il échoue (relais non activé,
 réseau coupé, service disparu), le panneau le dit et **ouvre alors seulement** un second
 chemin — courriel pré-rempli, ou copie du message. Voir
 [16_suggestion.js](assets/js/16_suggestion.js).
 
-> **Une action, une seule fois.** Au tout premier message envoyé, `formsubmit.co` adresse un
+> **Une action, une seule fois (GitHub Pages).** Au tout premier message envoyé, `formsubmit.co` adresse un
 > courriel d'activation à `etudes-electorales@franceinsoumise.org` : tant que ce lien n'est
 > pas cliqué, rien n'est délivré et le formulaire bascule sur son repli en le disant. Après
 > ce clic, les messages arrivent directement.
