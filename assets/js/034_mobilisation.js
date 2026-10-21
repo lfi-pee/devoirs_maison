@@ -124,8 +124,7 @@ const niveauxBareme=()=>{ const n=NIV_PRIO.length;
 const niveauxNotice=note=>
   `<p><b>Les mots posés sur la note.</b> La carte, l'infobulle et le chiffre de tête `+
   `écrivent la note derrière un <b>niveau</b>${note!=null?` — ici « ${niveauPrio(note)} »`:""} : `+
-  `${niveauxBareme()}. La carte les peint chacun de sa couleur, du jaune au bordeaux. `+
-  `Ces six paliers sont un choix d'<b>affichage</b>, destiné à rendre `+
+  `${niveauxBareme()}. Ces six paliers sont un choix d'<b>affichage</b>, destiné à rendre `+
   `le nombre lisible sans connaître l'échelle ; ils ne changent rien au calcul, et le `+
   `<b>rang</b> reste celui de la note — deux zones du même palier ne se valent pas, c'est le `+
   `nombre entre parenthèses qui les départage. Un niveau « faible » dit que le terrain `+
@@ -191,8 +190,9 @@ function rendMethodo(o){ o=o||{};
     `en revanche jamais être <b>négative</b> : le 0 est un rendement nul, pas un écart-type `+
     `sous le médian, et un rendement ne descend pas sous zéro. Reste que la pente `+
     `<b>s'infléchit au 50</b>${(hi!=null&&md0!=null)?` — dix points de note valent `+
-      `${_n3(md0/5)} voix/h en dessous, ${_n3((hi-md0)/5)} au-dessus`:""} : deux notes `+
-    `se comparent par leur <b>rang</b>, jamais par leur rapport.</p>`+
+      `${_n3(md0/5)} voix/h en dessous, ${_n3((hi-md0)/5)} au-dessus`:""} : c'est pourquoi la `+
+    `<b>couleur</b> de la carte se calcule sur le rendement brut `+
+    `et non sur la note — le nombre dit le rang, la teinte dit l'écart.</p>`+
     `<p class="hypnote">Le médian et l'écart-type sont ceux des <b>${_n0(r.n_bv)} bureaux de vote</b>, `+
     `seule maille qui découpe la France entière : la zone se situe ainsi parmi les bureaux du `+
     `pays, quelle que soit sa taille — et une commune, qui moyenne ses bons et ses mauvais `+

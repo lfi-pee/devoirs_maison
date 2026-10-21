@@ -100,19 +100,18 @@
     --warnbg:rgba(245,200,0,.14); /* or */ --warnbd:rgba(245,200,0,.45); /* or */ --warntx:var(--c-soleil);
     /* couleurs lues par le JS (contours des polygones, zones sans données) */
     --geosel:var(--c-creme); --geoline:var(--c-charbon); --geonodata:var(--c-terre);
-    /* Échelle de la choroplèthe (rang : bleu = faible → rouge = élevé), en crans des
-       rampes « Bleus ciel » et « Rouges ». Les deux moitiés se répondent en luminance
-       (cobalt .17 / rouge .15, marine .06 / carmin .06). Le thème sombre creuse le centre
-       — le pourpre, mi-chemin du bleu et du rouge — et sature aux extrêmes ; le thème
-       clair l'inverse (violet clair au centre). Dans les deux cas le ton médian se
-       distingue du fond de carte ET du « pas de données » (--geonodata) par sa TEINTE :
-       violette, là où ces deux-là sont des neutres chauds. */
-    --ramp0:var(--c-cobalt); --ramp1:var(--c-marine); --ramp2:var(--c-pourpre);
-    --ramp3:var(--c-carmin); --ramp4:var(--c-rouge);
+    /* Échelle de la choroplèthe (jaune = faible → bordeaux = élevé) : les six couleurs de
+       la légende de priorité (--prio1..6 ci-dessous), pour tous les indicateurs et dans
+       les deux thèmes. La médiane des zones affichées tombe entre l'orange et le rouge
+       (--ramp2 / --ramp3), une teinte que ni le fond de carte ni le « pas de données »
+       (--geonodata), des neutres chauds, ne portent. */
+    --ramp0:var(--prio1); --ramp1:var(--prio2); --ramp2:var(--prio3);
+    --ramp3:var(--prio4); --ramp4:var(--prio5); --ramp5:var(--prio6);
     /* Les deux ÉTIQUETTES de la légende (« – faible », « élevé + ») : même famille que
        les bornes de la rampe, mais ce sont du TEXTE et non des aplats — elles passent
-       donc le seuil de lisibilité, que les bornes elles-mêmes n'ont pas à tenir. */
-    --rampl:var(--c-azur); --ramph:var(--c-corail);
+       donc le seuil de lisibilité, que les bornes elles-mêmes n'ont pas à tenir (jaune
+       12,8:1 et corail 8,4:1 sur le charbon). */
+    --rampl:var(--prio1); --ramph:var(--c-corail);
     /* AXE D'ORIENTATION POLITIQUE — cinq crans, dans l'ordre de la recomposition en
        blocs : LFI-PCF = très à gauche, PS-EELV = à gauche, Macron = mixte, LR-DVD = à
        droite, RN-EXD = très à droite ; --pol6 pour « Autres », qui n'est pas sur l'axe.
@@ -127,13 +126,12 @@
     --pol4:var(--c-azur); --pol5:var(--c-saphir); --pol6:var(--c-gris-moyen);
     --pol1t:var(--c-corail); --pol2t:var(--c-rouge-clair); --pol3t:var(--c-lilas);
     --pol4t:var(--c-ciel); --pol5t:var(--c-azur);
-    /* Rampe de la NOTE DE PRIORITÉ — six paliers sur le score ABSOLU de 0 à 100, ceux de
-       la légende de priorité (hors Light.tokens.json, d'où les valeurs en clair ; cf.
-       RAMPE_PRIORITE dans validation_charte.py). Un palier par niveau de NIV_PRIO
-       (01_config.js) : faible ≤ 20 · secondaire ≤ 40 · importante ≤ 60 · haute ≤ 80 ·
-       majeure ≤ 90 · critique au-delà. Servie en APLAT — zones de la carte, pastille du
-       chiffre de tête, légende —, avec l'encre (charbon ou crème) qui contraste le mieux
-       (cf. encreNote) : le jaune ne porte pas de texte crème, ni le bordeaux du charbon. */
+    /* Couleurs de la LÉGENDE DE PRIORITÉ (hors Light.tokens.json, d'où les valeurs en
+       clair ; cf. RAMPE_PRIORITE dans validation_charte.py), du jaune au bordeaux. Elles
+       font la rampe de la choroplèthe (--ramp0..5 ci-dessus) et la pastille du chiffre de
+       tête, une couleur par niveau de NIV_PRIO (01_config.js) : faible ≤ 20 · secondaire
+       ≤ 40 · importante ≤ 60 · haute ≤ 80 · majeure ≤ 90 · critique au-delà. La pastille
+       porte l'encre (charbon ou crème) qui contraste le mieux (cf. encreNote). */
     --prio1:#F4ED0F; --prio2:#F8C71F; --prio3:#FF7107;
     --prio4:#E83400; --prio5:#B31F00; --prio6:#790000;
     /* Séries des profils socio (pyramide, logement, déplacements, mobilité) et de la
@@ -174,9 +172,8 @@
     --detbg:rgba(76,2,151,.07); /* violet */ --detbd:var(--c-amethyste); --dettx:var(--c-terre);
     --warnbg:rgba(245,200,0,.13); /* or */ --warnbd:rgba(185,114,0,.42); /* ambre */ --warntx:var(--c-ocre);
     --geosel:var(--c-creme); --geoline:var(--c-terre); --geonodata:var(--c-sable);
-    --ramp0:var(--c-cobalt); --ramp1:var(--c-azur); --ramp2:var(--c-violet-clair);
-    --ramp3:var(--c-corail); --ramp4:var(--c-rouge);
-    --rampl:var(--c-cobalt); --ramph:var(--c-rouge);
+    /* le jaune ne se lit pas sur le crème : ocre (7,3:1) et rouge de la rampe (6,6:1) */
+    --rampl:var(--c-ocre); --ramph:var(--prio5);
     --pol1t:var(--c-rouge); --pol2t:var(--c-carmin); --pol3t:var(--c-violet);
     --pol4t:var(--c-cobalt); --pol5t:var(--c-saphir);
   }
@@ -606,7 +603,8 @@
               color:var(--mut);font-size:15px;line-height:1;padding:4px 7px;border-radius:6px}
   #modalclose:hover{color:var(--txt);background:var(--softh)}
   .bar{display:inline-block;width:130px;height:10px;border-radius:3px;vertical-align:middle;margin:0 6px;
-       background:linear-gradient(to right,var(--ramp0),var(--ramp1),var(--ramp2),var(--ramp3),var(--ramp4))}
+       background:linear-gradient(to right,var(--ramp0),var(--ramp1),var(--ramp2),var(--ramp3),
+         var(--ramp4),var(--ramp5))}
   /* Paliers de la note « Prioritaire » (cf. syncLegend) : pastille, mot, bornes. */
   #legprio{margin:5px 0 3px}
   .legp{display:flex;align-items:center;gap:7px;font-size:12px;line-height:1.55}

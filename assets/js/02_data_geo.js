@@ -16,13 +16,13 @@ const irisInCommune=(ci,code)=>{ const r=PLM[code]; return r?r.test(ci):ci.slice
 
 // Coloration DIVERGENTE, centrée sur la MÉDIANE des zones affichées et proportionnelle à
 // l'ÉCART : la médiane prend le ton neutre du milieu de l'échelle, et une zone s'en écarte
-// vers le bleu (plus faible) ou le rouge (plus élevé) à proportion de cet écart.
+// vers le jaune (plus faible) ou le bordeaux (plus élevé) à proportion de cet écart.
 //
-// Pourquoi plus le RANG. Colorer au percentile garantit autant de bleu que de rouge à
+// Pourquoi plus le RANG. Colorer au percentile garantit autant de jaune que de bordeaux à
 // l'écran — une propriété qu'on ne cherche pas, et qui coûte cher : le rang écrase les
 // écarts là où la distribution est dense et en invente là où elle est plate. Deux zones de
 // la queue haute, +45 % et +100 % de voix, tombaient dans le même cinquième et sortaient
-// du MÊME rouge, alors que l'une vaut deux fois l'autre.
+// du MÊME bordeaux, alors que l'une vaut deux fois l'autre.
 //
 // L'ÉTALON. « Proportionnellement » demande une unité, et la même des deux côtés (sans
 // quoi un même écart ne donnerait pas le même ton à gauche et à droite de la médiane) :
@@ -30,7 +30,7 @@ const irisInCommune=(ci,code)=>{ const r=PLM[code]; return r?r.test(ci):ci.slice
 // seule zone aberrante ne suffisait pas à tasser toutes les autres sur le ton neutre ; à ce
 // décile, ~10 % des zones saturent au bout de l'échelle et les 90 % restantes s'y déploient.
 //
-// Le ton est INTERPOLÉ entre les cinq bornes, non arrondi à la plus proche : c'est ce qui
+// Le ton est INTERPOLÉ entre les six bornes, non arrondi à la plus proche : c'est ce qui
 // permet à +45 % et +100 % de ne pas se ressembler, et c'est exactement le dégradé que
 // montre la barre de la légende (même interpolation sRVB que `linear-gradient`).
 const ECART_Q=.9;
@@ -139,6 +139,16 @@ function scorePrioritaire(o){ const r=rendementPorte(o), b=rendRep(); if(r==null
   const t=r<=md?50*(r-lo)/(md-lo):50+50*(r-md)/(hi-md);
   return Math.max(0,Math.round(1000*t)/1000); }
 
+// La COULEUR, elle, se calcule sur le rendement BRUT et non sur la note. Le ton est un
+// écart PROPORTIONNEL à la médiane des zones affichées (cf. `colorer`), et un RAPPORT de
+// notes ne mesure rien : la note a une origine conventionnelle et une pente qui s'infléchit
+// au 50, si bien que « deux fois la note » ne veut pas dire « deux fois le terrain ». Le
+// même écart réel sortirait en deux tons différents selon le côté du 50 où les zones
+// tombent — soit exactement le défaut de la coloration au rang, corrigé de longue date. On
+// lit donc le nombre sur la note et l'écart sur la couleur, chacun sur la grandeur qui lui
+// convient ; les deux étant monotones l'une de l'autre, elles racontent le même classement.
+const colVal=o=>indicKey==="conquerir"?rendementPorte(o):rawVal(o,indicKey);
+
 // Les autres valeurs sont bakées par prep_bake.py et lues telles quelles.
 function rawVal(o,k){ if(!o)return null;
   if(k==="conquerir") return scorePrioritaire(o);
@@ -148,6 +158,7 @@ function rawVal(o,k){ if(!o)return null;
   if(STAT.has(k)) return o[`${k}_${selSingle}`];
   return o[k]; }
 const valOf=p=>rawVal(curVals[p.__code],indicKey);
+const colValOf=p=>colVal(curVals[p.__code]);
 
 // Effectif de l'indicateur actif, pour l'infobulle de la carte : un survol sert à
 // comparer, et deux zones au même pourcentage ne pèsent pas le même nombre de voix.

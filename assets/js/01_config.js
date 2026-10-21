@@ -247,10 +247,10 @@ const theme=()=>document.documentElement.dataset.theme==="light"?"light":"dark";
 // les tokens CSS. Relecture groupée à chaque changement de thème plutôt que par polygone :
 // getComputedStyle par bureau de vote coûterait des milliers d'appels sur une grande commune.
 const CVARS=["geosel","geoline","geonodata","track","tick","softh","detbd","bg",
-             "ramp0","ramp1","ramp2","ramp3","ramp4",
+             "ramp0","ramp1","ramp2","ramp3","ramp4","ramp5",
              // axe d'orientation politique : aplats (polN) et en-têtes de colonne (polNt)
              "pol1","pol2","pol3","pol4","pol5","pol6","pol1t","pol2t","pol3t","pol4t","pol5t",
-             // rampe de la note de priorité (zones « Prioritaire », pastille, légende)
+             // couleurs de la légende de priorité (pastille de la note)
              "prio1","prio2","prio3","prio4","prio5","prio6",
              // rampe « Neutres chauds » de la charte, sur laquelle est teint le fond de carte
              "c-charbon","c-terre","c-cendres","c-dune","c-sable","c-parchemin","c-creme"];
@@ -270,7 +270,7 @@ function rvba(couleur){
   const m=(s.match(/[\d.]+/g)||[]).map(Number);
   return m.length>=3?[m[0],m[1],m[2],m[3]!=null?m[3]:1]:null;
 }
-// Les cinq bornes de l'échelle, gardées en RVB : la choroplèthe INTERPOLE entre elles
+// Les six bornes de l'échelle, gardées en RVB : la choroplèthe INTERPOLE entre elles
 // (cf. colorer) au lieu d'arrondir à la plus proche, il lui faut des nombres.
 const RAMP=[];
 // Rampe « Neutres chauds » de la charte, en [luma, rvba] par luma croissante (cf. neutre).
@@ -279,7 +279,7 @@ const _luma=v=>.2126*v[0]+.7152*v[1]+.0722*v[2];
 function syncColors(){ const cs=getComputedStyle(document.documentElement);
   for(const n of CVARS)C[n]=cs.getPropertyValue("--"+n).trim();
   RAMP.length=0;
-  for(let i=0;i<5;i++)RAMP.push(rvba(C["ramp"+i])||[128,128,128]);
+  for(let i=0;i<6;i++)RAMP.push(rvba(C["ramp"+i])||[128,128,128]);
   NEUTRES.length=0;
   for(const n of ["charbon","terre","cendres","dune","sable","parchemin","creme"]){
     const v=rvba(C["c-"+n]); if(v)NEUTRES.push([_luma(v),v]); }
@@ -504,8 +504,8 @@ const palierPrio=v=>{ const n=Math.round(v);
   return NIV_PRIO.find(([s])=>n>s)||NIV_PRIO[NIV_PRIO.length-1]; };
 const niveauPrio=v=>palierPrio(v)[1];
 const nonMesure=v=>v==null||(typeof v==="number"&&isNaN(v));
-// La couleur suit le palier, donc le MOT : une zone écrite « Priorité haute » porte la
-// teinte de « Priorité haute », sur la carte comme dans la pastille.
+// La couleur de la pastille suit le palier, donc le MOT : une note écrite « Priorité
+// haute » porte la teinte de « Priorité haute ».
 const couleurNote=v=>C[palierPrio(v)[2]];
 // Encre de la pastille : le palier le plus sombre de la rampe (bordeaux) et le plus clair
 // (jaune) ne peuvent pas porter la même. On calcule les DEUX rapports de contraste
