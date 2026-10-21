@@ -71,9 +71,11 @@ try{
 <div id="info" class="panel"></div>
 <div id="legend" class="panel">
   <div id="legtitle" style="font-weight:600;color:var(--lav)"></div>
-  <div style="margin-top:4px"><span style="color:var(--rampl)">– faible</span>
+  <div id="legramp" style="margin-top:4px"><span style="color:var(--rampl)">– faible</span>
     <span class="bar"></span><span style="color:var(--ramph)">élevé +</span></div>
-  <div class="hint">couleur = écart à la médiane des zones affichées (bleu = plus faible, rouge = plus élevé) · cliquez pour descendre d'un niveau, dézoomez pour remonter</div>
+  <!-- paliers de la note « Prioritaire », remplis par syncLegend (07_controls.js) -->
+  <div id="legprio" style="display:none"></div>
+  <div class="hint"><span id="legcoul">couleur = écart à la médiane des zones affichées (bleu = plus faible, rouge = plus élevé)</span> · cliquez pour descendre d'un niveau, dézoomez pour remonter</div>
 </div>
 <!-- Notice de méthode, ouverte par le « i » de la légende (versions 2 et 3). Le volet de la
      fiche explique le chiffre D'UNE ZONE ; celui-ci explique l'indicateur avant tout clic. -->

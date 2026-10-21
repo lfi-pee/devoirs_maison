@@ -607,6 +607,11 @@
   #modalclose:hover{color:var(--txt);background:var(--softh)}
   .bar{display:inline-block;width:130px;height:10px;border-radius:3px;vertical-align:middle;margin:0 6px;
        background:linear-gradient(to right,var(--ramp0),var(--ramp1),var(--ramp2),var(--ramp3),var(--ramp4))}
+  /* Paliers de la note « Prioritaire » (cf. syncLegend) : pastille, mot, bornes. */
+  #legprio{margin:5px 0 3px}
+  .legp{display:flex;align-items:center;gap:7px;font-size:12px;line-height:1.55}
+  .legp i{width:10px;height:10px;border-radius:50%;flex:none}
+  .legp .legr{margin-left:auto;padding-left:12px;color:var(--mut2);font-variant-numeric:tabular-nums}
   .hint{color:var(--mut2);font-size:11px}
   /* message d'état : n'occupe la barre que s'il dit quelque chose. */
   #loading:empty{display:none}

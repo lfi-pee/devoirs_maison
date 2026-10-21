@@ -38,9 +38,22 @@ function syncSocioChips(){ const on=socioActive(), immo=immoActive();
 // en premier. « Prioritaire » ne dit d'ailleurs que le rang : ce « i » est le seul endroit
 // où l'on apprend ce qui le fabrique (voix gagnables ÷ heures de porte-à-porte).
 // `textContent` ailleurs : rien à échapper, et rien de plus à montrer.
+// Sur la note, la carte ne code plus un écart à la médiane mais les six paliers absolus de
+// NIV_PRIO : la barre dégradée cède la place à leur liste, du plus faible au plus fort,
+// bornes lues dans NIV_PRIO comme le barème de la notice (niveauxBareme).
+const LEGCOUL_ECART=$("legcoul").textContent;
+const legPrioHtml=()=>NIV_PRIO.map(([s,lab,tok],i)=>{
+  const bas=i===NIV_PRIO.length-1?0:s+1, haut=i?NIV_PRIO[i-1][0]:null;
+  return `<div class="legp"><i style="background:var(--${tok})"></i><span>${lab}</span>`+
+    `<span class="legr">${haut==null?`${bas} et plus`:`${bas} – ${haut}`}</span></div>`; })
+  .reverse().join("");
 function syncLegend(){ const t=indicLabel+(socioActive()&&!SOCIO.has(indicKey)?" · estimé":"");
-  const lg=$("legtitle");
-  if(indicKey==="conquerir")
+  const lg=$("legtitle"), prio=indicKey==="conquerir", lp=$("legprio");
+  $("legramp").style.display=prio?"none":"";
+  lp.style.display=prio?"":"none";
+  if(prio&&!lp.firstChild)lp.innerHTML=legPrioHtml();
+  $("legcoul").textContent=prio?"couleur = niveau de la note, le même dans toute la France":LEGCOUL_ECART;
+  if(prio)
     lg.innerHTML=`${t} <span class="legi" role="button" tabindex="0" `+
       `title="Comment ce chiffre est calculé">i</span>`;
   else lg.textContent=t; }

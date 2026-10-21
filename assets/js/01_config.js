@@ -250,8 +250,8 @@ const CVARS=["geosel","geoline","geonodata","track","tick","softh","detbd","bg",
              "ramp0","ramp1","ramp2","ramp3","ramp4",
              // axe d'orientation politique : aplats (polN) et en-têtes de colonne (polNt)
              "pol1","pol2","pol3","pol4","pol5","pol6","pol1t","pol2t","pol3t","pol4t","pol5t",
-             // rampe de la note de priorité (aplat de la pastille)
-             "note98","note94","note86","note75","note60","note45","note30","note00",
+             // rampe de la note de priorité (zones « Prioritaire », pastille, légende)
+             "prio1","prio2","prio3","prio4","prio5","prio6",
              // rampe « Neutres chauds » de la charte, sur laquelle est teint le fond de carte
              "c-charbon","c-terre","c-cendres","c-dune","c-sable","c-parchemin","c-creme"];
 const C={};
@@ -484,33 +484,33 @@ const fmtVal=(v,u)=> (v==null||(typeof v==="number"&&isNaN(v)))?"—":(u==="€"
 //
 // Aucun niveau ne dit « rien à gagner ici » : cette phrase-là n'appartient qu'au 0 de
 // l'échelle (231 zones, cf. 02_data_geo.js), et 44 % des communes tiennent sous 40. Les
-// mots gradués (« faible », « moyenne », « forte ») disent donc un RANG, comme la note,
+// mots gradués (« faible », « secondaire », « importante »…) disent donc un RANG, comme la note,
 // et non un verdict de terrain — un groupe d'action lisant « pas prioritaire » chez lui
 // aurait entendu du modèle une phrase que le modèle ne prononce pas.
 //
 // Les seuils sont un choix d'AFFICHAGE et non une propriété de l'échelle : ils vivent
 // donc ici, en un seul endroit, lu tel quel par le barème de la notice (niveauxBareme).
 // « Priorité critique » et non « très forte » : c'est le mot du ticket de refonte
-// (lfi-pee/mobilite-vote-france#1), et les deux outils nomment la même chose.
-const NIV_PRIO=[[90,"Priorité critique"],[60,"Priorité forte"],
-                [40,"Priorité moyenne"],[0,"Priorité faible"]];
+// (lfi-pee/mobilite-vote-france#1), et les deux outils nomment la même chose. Les six
+// paliers, leurs mots et leur couleur (--prioN, map.css) sont ceux de la légende de
+// priorité : 0–20 · 21–40 · 41–60 · 61–80 · 81–90 · 91 et plus.
+const NIV_PRIO=[[90,"Priorité critique","prio6"],[80,"Priorité majeure","prio5"],
+                [60,"Priorité haute","prio4"],[40,"Priorité importante","prio3"],
+                [20,"Priorité secondaire","prio2"],[0,"Priorité faible","prio1"]];
 // Le niveau se lit sur l'ENTIER AFFICHÉ, pas sur la valeur brute : une note de 90,4
 // s'écrit « 90 / 100 » comme une note de 89,7, et les deux zones ne peuvent pas porter
 // deux mots différents sous le même nombre. C'est l'argument de fmtVal, appliqué au mot.
-const niveauPrio=v=>{ const n=Math.round(v);
-  return (NIV_PRIO.find(([s])=>n>s)||NIV_PRIO[NIV_PRIO.length-1])[1]; };
+const palierPrio=v=>{ const n=Math.round(v);
+  return NIV_PRIO.find(([s])=>n>s)||NIV_PRIO[NIV_PRIO.length-1]; };
+const niveauPrio=v=>palierPrio(v)[1];
 const nonMesure=v=>v==null||(typeof v==="number"&&isNaN(v));
-// Rampe de la note : huit crans de la charte sur le score absolu (--note* dans map.css).
-// Lue sur l'ENTIER AFFICHÉ, comme le mot de niveau — une note de 93,8 s'écrit « 94 » et
-// ne peut pas porter la couleur du cran d'en dessous pendant que le nombre dit 94.
-const NOTE_RAMPE=[[98,"note98"],[94,"note94"],[86,"note86"],[75,"note75"],
-                  [60,"note60"],[45,"note45"],[30,"note30"],[0,"note00"]];
-const couleurNote=v=>C[(NOTE_RAMPE.find(([s])=>Math.round(v)>=s)||NOTE_RAMPE[NOTE_RAMPE.length-1])[1]];
-// Encre de la pastille : le cran le plus sombre de la rampe (carmin) et le plus clair
-// (citron) ne peuvent pas porter la même. On calcule les DEUX rapports de contraste
+// La couleur suit le palier, donc le MOT : une zone écrite « Priorité haute » porte la
+// teinte de « Priorité haute », sur la carte comme dans la pastille.
+const couleurNote=v=>C[palierPrio(v)[2]];
+// Encre de la pastille : le palier le plus sombre de la rampe (bordeaux) et le plus clair
+// (jaune) ne peuvent pas porter la même. On calcule les DEUX rapports de contraste
 // (WCAG) et on garde le meilleur, plutôt que de couper sur un seuil de luminance : près
-// du milieu de la rampe un seuil se trompe d'encre (au vermillon, le crème fait 3,4:1 et
-// le charbon 4,5:1). Le calcul, lui, reste juste si la rampe est
+// du milieu de la rampe un seuil se trompe d'encre. Le calcul, lui, reste juste si la rampe est
 // retouchée dans map.css. Repli sur le charbon si la couleur n'est pas encore lue.
 const _lumi=c=>{ const l=[c[0],c[1],c[2]].map(x=>{ x/=255;
     return x<=.04045?x/12.92:Math.pow((x+.055)/1.055,2.4); });

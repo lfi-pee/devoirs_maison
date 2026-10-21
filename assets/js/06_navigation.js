@@ -109,17 +109,19 @@ function prefetchEnfants(niveau,code){
 // touche ni aux contours ni aux valeurs, il suffit alors de rejouer ce style sur la couche
 // déjà tracée (cf. dessiner).
 function styleFactory(geo,niveau){
-  // `colValOf` et non `valOf` : la couleur se calcule sur la grandeur BRUTE, la note
-  // « Prioritaire » n'étant qu'un habillage — d'origine conventionnelle et de pente
-  // infléchie au 50, dont un RAPPORT ne mesure donc aucun écart réel (cf. 02_data_geo.js).
-  // Pour tous les autres indicateurs, les deux sont le même nombre.
-  const raws=geo.features.map(f=>colValOf(f.properties));
-  const fc=colorer(raws);
+  // La note « Prioritaire » se peint sur ses six paliers ABSOLUS (NIV_PRIO, 01_config.js),
+  // ceux du mot que l'infobulle écrit : une zone « Priorité haute » a la même teinte dans
+  // toute la France, quelles que soient ses voisines. Les autres indicateurs gardent
+  // l'écart à la médiane des zones affichées (colorer).
+  const prio=indicKey==="conquerir";
+  const raws=geo.features.map(f=>valOf(f.properties));
+  const fc=prio?(v=>nonMesure(v)?C.geonodata:couleurNote(v)):colorer(raws);
   // une seule zone porteuse de valeur : la coloration relative la placerait au centre
   // (neutre). On hérite alors de la couleur que cette zone avait au niveau précédent
-  // (sommet de pile) — renormaliser un singleton n'a pas de sens (demande terrain).
+  // (sommet de pile) — renormaliser un singleton n'a pas de sens (demande terrain). Les
+  // paliers absolus n'ont rien à renormaliser : la zone garde le sien.
   const top=stack[stack.length-1];
-  const inherit=(raws.filter(v=>v!=null&&!isNaN(v)).length===1&&top&&top.color)?top.color:null;
+  const inherit=(!prio&&raws.filter(v=>v!=null&&!isNaN(v)).length===1&&top&&top.color)?top.color:null;
   const colOf=v=>(inherit&&v!=null&&!isNaN(v))?inherit:fc(v);
   // En mode sélection multiple (communes uniquement), une commune sélectionnée garde un
   // liseré blanc épais — y compris après un mouseout (resetStyle réapplique ce style).
@@ -129,7 +131,7 @@ function styleFactory(geo,niveau){
   const st=f=>{ const multi=multiSel&&niveau==="commune", code=f.properties.__code;
     const sel=multi&&selCodes.has(code), part=multi&&selParts.has(code);
     const fs=fillStyle(), vif=sel||part;
-    return {fillColor:colOf(colValOf(f.properties)),color:vif?C.geosel:C.geoline,
+    return {fillColor:colOf(valOf(f.properties)),color:vif?C.geosel:C.geoline,
             weight:vif?2.6:fs.w,dashArray:part?"5 4":null,
             fillOpacity:sel?Math.min(.95,fs.op+.2):(part?Math.min(.95,fs.op+.1):fs.op)}; };
   st.colOf=colOf; return st; }
@@ -174,7 +176,7 @@ function paintLayer(geo,valeurs,enter,niveau){ if(layer)layer.remove();
   layer.on("click",e=>{ const ly=e.layer; if(!ly||!ly.feature)return;
     const f=ly.feature, p=f.properties, o=valeurs[p.__code];
     if(enter&&multiSel&&niveau==="commune")return toggleSel(p.__code,o);
-    if(enter){ enterColor=layerStyle.colOf(colValOf(p)); setGhost(f,layerStyle(f)); }
+    if(enter){ enterColor=layerStyle.colOf(valOf(p)); setGhost(f,layerStyle(f)); }
     infoPanel(p.__nom,o,niveau,p.__code);
     if(enter)enter(f,ly,o,true); });
   fadeInLayer(); }

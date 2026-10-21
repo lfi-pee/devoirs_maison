@@ -232,7 +232,7 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
     // définition courte ; clic = volet méthodo, en voix par heure et avec les valeurs de
     // CETTE zone (cf. 034_mobilisation.js).
     const info=indicKey==="conquerir"?" "+hint(CONQ_TIP):"";
-    // La note de priorité sort avec son NIVEAU (« Priorité forte (72 / 100) », cf. prioHtml) :
+    // La note de priorité sort avec son NIVEAU (« Priorité haute (72 / 100) », cf. prioHtml) :
     // seul indicateur du site dont le nombre ne se lit pas tout seul, faute d'unité qui le
     // situe. Le test porte sur l'indicateur et non sur son unité — « /100 » est un format,
     // et la prochaine note sur 100 ne serait pas pour autant une priorité.
