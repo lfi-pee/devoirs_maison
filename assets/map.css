@@ -17,19 +17,27 @@
      saturation constantes, jusqu'à 4,5:1 (AA) sur la plus claire des surfaces de panneau
      (--pbg2) : --lav #b875f3 et --cram #fb5f5f. Chaque couple texte/fond de cette feuille
      a été vérifié à ce seuil ; toute retouche d'un token doit l'être aussi. */
+  /* Union Gothic, police de TITRES du kit graphique M27. Variable sur deux axes : la
+     graisse (400 → 1000) et la chasse (50 % → 200 %), que `font-stretch` pilote. Le kit
+     prescrit la coupe Condensed, soit 83 % (--ch-titre). Licence CC BY-NC-ND : le fichier
+     est inliné tel quel par build_map.py, voir assets/fonts/LICENCE.md. */
+  @font-face{font-family:"Union Gothic";src:url("fonts/union_gothic-variable.ttf") format("truetype");
+    font-weight:400 1000;font-stretch:50% 200%;font-display:swap}
   :root{
-    /* Répertoires typographiques de la charte. Config Variable est sous licence et ne
-       peut pas être redistribuée : la charte nomme elle-même ses ALTERNATIVES GRATUITES,
-       et ce sont celles-là qui sont chargées (voir map.html) — Public Sans Black/Bold
-       pour les titres et sous-titres, Gowun Batang Regular/Bold pour le corps de texte.
-       Le partage suit la charte, à une réserve près : dans un atlas, « corps de texte »
-       veut dire TEXTE SUIVI (méthodes, notes, notices). Les libellés, les commandes et
-       surtout les NOMBRES restent en Public Sans, parce que Gowun Batang est un serif à
-       petite hauteur d'x DÉPOURVU de chiffres tabulaires — or `font-variant-numeric:
-       tabular-nums` tient l'alignement de toutes les colonnes de la fiche, et les
-       tableaux y descendent à 9,5 px. Pour tout ramener à une fonte : --f-corps:var(--f-titre). */
-    --f-titre:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    --f-corps:"Gowun Batang",Georgia,"Times New Roman",serif;
+    /* Typographie du kit graphique M27 :
+         titres   Union Gothic Condensed, 1000 pour le titre du site, 700 pour les
+                  titres de fiche et de fenêtre (le H2 du kit) ;
+         texte    Stack Sans Text, Regular pour le corps, Bold pour les boutons.
+       Stack Sans Text a des chiffres tabulaires (`tnum`) : elle tient seule les libellés,
+       les tableaux et les nombres de la fiche, il n'y a plus de partage texte suivi /
+       chiffres à faire. Union Gothic n'en a pas, elle ne porte donc aucune colonne. */
+    --f-titre:"Union Gothic",Impact,"Arial Narrow",sans-serif;
+    --ch-titre:83%;
+    --f-corps:"Stack Sans Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    /* titre isométrique : lettre et ombre portée, dérivées des tokens du thème. Le bandeau
+       sombre étant violet, l'ombre du logo M27 blanc y passe au charbon ; sur crème, violet
+       et ombre violet clair, comme le logo M27 d'origine. */
+    --iso-txt:var(--strong); --iso-ombre:var(--pbgs);
     /* --pbgs : même teinte que --pbg mais OPAQUE, pour les éléments collants qui
        doivent masquer le contenu qui défile dessous (poignée du bottom-sheet). */
     --pbg:rgba(33,35,32,.93); --pbgs:#212320; --pbg2:#2b2e2a; --pbg3:#3a3e39; --bord:#474b45;
@@ -131,22 +139,18 @@
     --rampl:#0d6ba8; --ramph:#c4231c;
     --pol1t:#e71038; --pol2t:#e50066; --pol3t:#9951d8; --pol4t:#0477cf; --pol5t:#1E3588;
   }
-  html,body{margin:0;height:100%;font-family:var(--f-titre);background:var(--bg);color:var(--txt)}
-  /* TEXTE SUIVI → corps de texte de la charte (Gowun Batang). Ne sont concernés que les
-     blocs qui se lisent en phrases : méthodes, notes, infobulles, notices, formulaire.
-     Tout ce qui est libellé, commande, tableau ou nombre reste en Public Sans (cf. le
-     commentaire de --f-corps). Un serif se lit plus petit qu'un sans à taille égale,
-     d'où le demi-point rendu à ces blocs-là. */
-  #banner .bnr-txt,
-  #info .hint::after,
-  #info .detbody,#info .mnote,#info .hypnote,#info .ahint,#info .gahint,#info .defs,
-  #info .act li,#info .act .inv,#info .lvb,#info ul.rcom li,#info .recos .rcohint,
-  #modal p,#modal .hypnote,
-  #legend .hint,.sgnote,.sgfoot{font-family:var(--f-corps)}
-  #info .detbody,#modal p{font-size:12.5px}
-  /* …sauf les widgets CHIFFRÉS logés à l'intérieur de ces blocs : l'équation du score et
-     le barème gradué alignent des nombres, ils restent donc en chiffres tabulaires. */
-  .notesc,#info .detbody .mobeq,#info .detbody .mobdet{font-family:var(--f-titre)}
+  :root[data-theme="light"]{--iso-txt:var(--lav); --iso-ombre:color-mix(in srgb,var(--lav) 30%,var(--pbgs))}
+  html,body{margin:0;height:100%;font-family:var(--f-corps);background:var(--bg);color:var(--txt)}
+  /* les champs de formulaire n'héritent pas de la police du document */
+  button,input,select,textarea{font-family:inherit}
+  /* TITRES du kit : Union Gothic Condensed. 700 = le H2 du kit (nom de la zone, titre des
+     fenêtres) ; le titre du site, seul H1, prend le 1000 dans le bandeau. */
+  #banner .bnr-titre,#info .t,#info .sh-name,#info .head,#modal h3{
+    font-family:var(--f-titre);font-stretch:var(--ch-titre);font-weight:700;letter-spacing:.005em}
+  /* BOUTONS du kit : Stack Sans Text Bold, en capitales (« JE SOUTIENS »). */
+  #back,#pastoggle,#advtoggle,#exportbtn,#multitoggle,#themetoggle,#suggestbtn,
+  #selbar button,.sgbtn{font-weight:700}
+  .lbl,.sgbtn{text-transform:uppercase;letter-spacing:.03em}
   #map{position:absolute;inset:0;background:var(--bg)}
   .panel{position:absolute;z-index:1000;background:var(--pbg);color:var(--txt);
          border:1px solid var(--bord);border-radius:10px;
@@ -160,10 +164,17 @@
           display:flex;align-items:center;gap:11px;padding:8px 14px;
           background:linear-gradient(90deg,var(--bnr1),var(--bnr2))}
   #banner.hidden{display:none}
-  #banner .bnr-ico{font-size:18px;flex:none;line-height:1}
   #banner .bnr-txt{line-height:1.35;color:var(--txt)}
-  /* nom du site : le seul vrai TITRE de l'interface — Public Sans Black. */
-  #banner .bnr-txt b{font-family:var(--f-titre);font-weight:900;letter-spacing:-.01em;color:var(--strong)}
+  /* Nom du site : le H1 du kit, en Union Gothic Condensed 1000 et en capitales, avec « l'effet
+     isométrique » du kit : la ligne de base monte de 15° (skewY, les verticales restent
+     verticales) et une ombre décalée double les lettres, comme dans le logo M27.
+     La transformation ne réserve pas de place : la montée (largeur × tan 15°) est rendue
+     en marge haute, d'où la largeur fixée en em, deux lignes de capitales comprises. */
+  #banner .bnr-titre{flex:none;display:flex;flex-direction:column;width:7.8em;
+       margin:2.1em 0 2px;font-size:16px;font-weight:1000;line-height:.9;
+       text-transform:uppercase;color:var(--iso-txt);text-shadow:-2px 2px 0 var(--iso-ombre);
+       transform:skewY(-15deg);transform-origin:0 100%}
+  #banner .bnr-titre span+span{align-self:flex-end}
   #banner .bnr-cta{color:var(--lav)}
   #bnrclose{flex:none;margin-left:auto;cursor:pointer;border:none;background:transparent;
             color:var(--mut);font-size:15px;line-height:1;padding:4px 7px;border-radius:6px}
@@ -220,7 +231,7 @@
   #info .cols{columns:300px;column-gap:22px}
   #info .cols>.exp{break-inside:avoid;-webkit-column-break-inside:avoid;page-break-inside:avoid;margin:0 0 4px}
   #info .cols>.exp .sec{margin-top:0}
-  #info .t{font-weight:800;font-size:16px;color:var(--lav);margin-bottom:2px}
+  #info .t{font-size:22px;line-height:1.05;color:var(--lav);margin-bottom:3px}
   /* Effectif accolé à un pourcentage (« 12,3 % · 4 567 voix ») : gris, non gras, jamais
      coupé — c'est un complément de lecture, pas la valeur principale. */
   #info .cnt{font-weight:400;color:var(--mut);white-space:nowrap}
@@ -231,8 +242,11 @@
   #info .reperes span{display:inline-flex;align-items:center;white-space:nowrap}
   #info .reperes b{color:var(--txt);font-weight:800;margin-right:4px}
   #info .lead{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
-  #info .head{font-size:30px;font-weight:900;color:var(--cram);line-height:1;margin:2px 0 8px;letter-spacing:-.015em}
+  #info .head{font-size:34px;font-weight:1000;color:var(--cram);line-height:1;margin:2px 0 8px}
+  /* ce qui accompagne le chiffre de tête n'est pas un titre : retour à la police de texte */
+  #info .head small,#info .head .priobadge,#info .t .cnt{font-family:var(--f-corps);font-stretch:normal;letter-spacing:0}
   #info .head small{font-size:13px;color:var(--mut);font-weight:600}
+  #info .t .cnt{font-size:13px}
   /* Pastille de la note (mobilite-vote-france#1) : l'aplat porte la rampe du score, et
      seule la pastille la porte — le mot et le nombre restent en --cram, vérifié au
      contraste. L'encre des chiffres est choisie par luminance du cran (cf. encreNote). */
@@ -489,7 +503,7 @@
   #modal{top:50%;left:50%;transform:translate(-50%,-50%);z-index:1400;
          width:min(640px,92vw);max-height:min(76vh,760px);overflow:auto;overscroll-behavior:contain;
          padding:18px 22px;line-height:1.55}
-  #modal h3{margin:0 0 10px;font-size:15px;color:var(--lav);font-weight:900}
+  #modal h3{margin:0 0 10px;font-size:22px;line-height:1.05;color:var(--lav)}
   #modal p{margin:0 0 9px;font-size:12.5px}
   #modal b{color:var(--strong)}
   #modal .hypnote{font-size:11.5px;color:var(--mut);border-left:2px solid var(--detbd);padding-left:9px}
@@ -622,6 +636,7 @@
 
     #banner{gap:9px;padding:7px 10px;font-size:12px}
     #banner .bnr-cta{display:none}
+    #banner .bnr-titre{font-size:13px}
     #top{left:8px;right:8px;top:calc(var(--banner-h) + 8px);gap:6px;padding:7px 9px}
     /* Export PDF et Suggérer supposent respectivement une boîte de dialogue d'impression
        et un clavier confortable : peu adaptés au tactile, et la barre haute est déjà
@@ -689,7 +704,7 @@
           text-align:center;padding:6px 0 8px;background:var(--pbgs)}
     #info .sheet-handle::before{content:"";display:block;width:40px;height:4px;
           margin:0 auto;border-radius:3px;background:var(--mut2)}
-    #info .sh-name{display:none;margin-top:6px;font-weight:700;font-size:14px;color:var(--lav)}
+    #info .sh-name{display:none;margin-top:6px;font-size:18px;color:var(--lav)}
     /* tableau scrutin par scrutin : resserré pour tenir dans la largeur du téléphone,
        sinon la dernière colonne (abstention) tombait hors cadre. */
     #info table.recompo{font-size:9.5px}

@@ -14,7 +14,9 @@ calculées nulle part, ni côté carte ni dans les fiches.
 
 from __future__ import annotations
 
+import base64
 import pathlib
+import re
 from functools import cache
 
 from prep_seed import amorce
@@ -26,13 +28,27 @@ JS_MARK = "/*__JS__*/"
 # le marqueur INCLUT le `{}` par défaut : sans lui, l'injection laissait `={...}{};`
 # derrière elle — une erreur de syntaxe, et l'amorce passait silencieusement à la trappe.
 SEED_MARK = "/*__SEED__*/{}"
+# La page n'a pas de serveur d'assets : les `url("fonts/…")` de map.css (chemins relatifs
+# à assets/) sont remplacés par le fichier en `data:`. Ils restent dans un <style>, donc
+# l'export PDF (10_export.js), qui recopie les <style>, emporte la police avec lui.
+ASSET_URL = re.compile(r'url\("(fonts/[^"]+)"\)')
+MIME = {".ttf": "font/ttf", ".woff2": "font/woff2"}
+
+
+def _inline_assets(css: str) -> str:
+    def data_uri(m: re.Match) -> str:
+        f = ASSETS / m.group(1)
+        b64 = base64.b64encode(f.read_bytes()).decode("ascii")
+        return f'url("data:{MIME[f.suffix]};base64,{b64}")'
+
+    return ASSET_URL.sub(data_uri, css)
 
 
 # @cache : l'assemblage relit tous les modules et simplifie les contours de la vue France
 # (~0,4 s). Payé une fois à la PUBLICATION (build_site.py), jamais par un visiteur.
 @cache
 def assemble_map(base: str | None = None, suggestion: str | None = None) -> str:
-    css = (ASSETS / "map.css").read_text(encoding="utf-8")
+    css = _inline_assets((ASSETS / "map.css").read_text(encoding="utf-8"))
     parts = [
         f.read_text(encoding="utf-8") for f in sorted((ASSETS / "js").glob("*.js"))
     ]

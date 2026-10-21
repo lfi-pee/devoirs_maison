@@ -10,12 +10,11 @@
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<!-- Polices de la charte graphique de la France insoumise (https://lafranceinsoumise.fr/charte-graphique/).
-     La charte prescrit Config Variable, sous licence — elle nomme elle-même les alternatives
-     GRATUITES à servir à sa place, et ce sont celles-ci : Public Sans (titres en Black 900,
-     sous-titres en Bold) et Gowun Batang (corps de texte, Regular et Bold). `display=swap` :
-     la carte s'affiche dans la pile de repli plutôt que d'attendre le réseau. -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;family=Public+Sans:ital,wght@0,300..900;1,400..700&amp;display=swap"/>
+<!-- Police de texte du kit graphique M27 : Stack Sans Text (SIL OFL), Regular pour le corps
+     et Bold pour les boutons. La police de titres, Union Gothic, n'est pas sur Google Fonts :
+     elle est inlinée dans la feuille (assets/fonts/). `display=swap` : la carte s'affiche
+     dans la pile de repli plutôt que d'attendre le réseau. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Stack+Sans+Text:wght@200..700&amp;display=swap"/>
 <style>/*__CSS__*/</style>
 <script>/* thème appliqué avant le premier rendu : sinon la page s'affiche en sombre puis bascule (flash) quand 13_theme.js s'exécute, en bas du document. Sans choix explicite en localStorage, on suit la préférence système (prefers-color-scheme) ; à défaut de préférence détectable, sombre. */
 try{
@@ -27,8 +26,8 @@ try{
 <body>
 <div id="map"></div>
 <div id="banner" class="panel">
-  <span class="bnr-ico">🗳️</span>
-  <span class="bnr-txt"><b>Atlas électoral militant</b> — toutes les données utiles à votre zone
+  <h1 class="bnr-titre"><span>Atlas électoral</span><span>militant</span></h1>
+  <span class="bnr-txt">Toutes les données utiles à votre zone
     (participation, réservoirs de voix, reports, profil social), de la région au bureau de vote.
     <span class="bnr-cta">Cliquez sur la carte ou cherchez une zone pour explorer.</span></span>
   <button id="bnrclose" title="Masquer ce bandeau">✕</button>
