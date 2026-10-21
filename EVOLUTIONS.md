@@ -809,3 +809,23 @@ circonscriptions.
 | ✅ Fait | **Jeton CSRF.** La requête porte l'en-tête `X-XSRF-TOKEN` tiré du cookie `XSRF-TOKEN` de canvass, qui refuse sinon le `POST` (419). Il n'est jamais envoyé au relais. |
 | ⚠️ Assumé | **La page statique garde le relais** tant que GitHub Pages sert : sans `--suggestion`, rien ne change. Il disparaît avec elle. |
 | ✅ Vérifié | **De bout en bout dans Chromium**, page construite avec `--suggestion` et servie par canvass après une vraie connexion : champs d'identité absents, notice canvass, `POST` avec `X-XSRF-TOKEN` → `200 {"success":"true"}`, « Message envoyé », bouton neutralisé, aucune erreur JS sur l'atlas. Le courriel journalisé part à `etudes-electorales@franceinsoumise.org`, en répondre-à le compte, contexte (zone, indicateur, élections, permalien) ligne à ligne. |
+
+## La feuille tenait quatre couleurs de la charte, et le kit M27 en fournit quarante-quatre
+
+> Demande : « faire respecter au site cette charte graphique, entièrement », avec deux
+> fichiers : `Light.tokens.json` (variables de couleur exportées de Figma, 49 tokens en
+> neuf rampes) et le *KIT GRAPHIQUE M27* (PDF, polices, logos). Cette entrée couvre les
+> couleurs ; la typographie du kit est dans le commit 33c535f. La feuille ne tenait
+> jusqu'ici que les quatre couleurs de base de la charte publique. Le reste, c'est-à-dire
+> les gris de l'interface, le violet d'écran, toute la choroplèthe, l'axe politique, la
+> rampe de la note et les séries socio, était hors charte, en partie délibérément.
+
+| Statut | Détail |
+| ------ | ------ |
+| ✅ Fait | **Toutes les couleurs servies viennent du fichier.** [map.css](assets/map.css) recopie chaque variable en primitif `--c-*`, et les tokens sémantiques des deux thèmes ne font que les référencer. Les seuls nombres restants sont les fonds translucides, en `rgba()` d'un primitif nommé en commentaire. Les couleurs que le JS écrivait en dur (pyramide, logement, déplacements, carnet, participation, bandes NFP, gris « Autres ») passent par des tokens `--serA…F` ou `var(--c-*)`. |
+| ✅ Fait | **Les encodages de données aussi.** C'était le choix inverse jusqu'ici. Choroplèthe : cobalt → azur → violet clair → corail → rouge en clair, et cobalt → marine → pourpre → carmin → rouge en sombre, les deux moitiés appariées en luminance. Axe politique : rouge, corail, améthyste, azur, saphir. Note de priorité : carmin → citron, par les rouges, les oranges et les accents. |
+| ✅ Fait | **Le fond de carte est teint aux neutres chauds** ([01_config.js](assets/js/01_config.js), `teinter`). Positron et dark sont en gris. Chaque couleur du style est ramenée, à luma égale, sur la rampe charbon → crème. La correspondance est croissante, donc la hiérarchie terre / eau / bâti est conservée. Le gamma du thème sombre s'applique avant. |
+| ✅ Fait | **Le thème clair suit les rôles du fichier** : texte en noir, gris foncé et gris moyen (le groupe « Noirs et blanc »), filets en gris clair, papier crème. **Le thème sombre** n'a pas d'équivalent dans le fichier : il prend les crans clairs des mêmes rampes (crème, gris clair, dune, lilas, corail). Le violet et le rouge de base y feraient 1,3:1 et 3,0:1. |
+| ✅ Vérifié | **[validation_charte.py](validation_charte.py)**, lancé par la CI avant le build : il vérifie que les primitifs sont exactement la charte et qu'aucune couleur littérale hors charte ne reste dans `assets/` ou `map.html`, commentaires exclus. Il passe sur le travail en cours et relève 159 écarts sur le commit précédent. **Contrastes** : 68 couples texte/fond par thème, calculés au ratio WCAG avec les fonds translucides aplatis. Tous passent 4,5:1 (3,5:1 pour `--mut2`), sauf le rouge sur fond de survol en clair, couple qui n'existe pas dans la feuille. **Rendu** : spécimens de fiche capturés dans Chromium dans les deux thèmes. `teinter`, `neutre` et `encreNote` ont été exécutés depuis des tranches du fichier source. |
+| ⏳ Pas fait | **Les logos du kit ne sont pas posés.** Le bandeau garde son 🗳️, pour la même raison que la première fois : apposer le logo LFI ou M27 fait lire l'atlas comme une publication officielle de la campagne. Il suffit d'un mot pour le poser. |
+

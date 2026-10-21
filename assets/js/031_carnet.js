@@ -91,13 +91,13 @@ function carnetCompo(o,b){
   // Point 13 : on évite la lecture « rouge-jaune-bleu = FI-LREM-RN ». Les voix garanties et
   // gagnables partagent la couleur de campagne (rouge) — gagnables en rayures (≈ 50 %
   // pleines) pour marquer l'incertitude ; inaccessibles en bleu/gris neutre.
-  const RED="#D1271C";
+  const RED="var(--c-rouge)";
   // Un segment `null` (modèle sans valeur ici) sort de la barre ET de la légende : mieux vaut
   // une décomposition à deux termes qu'un « 0 » qui se lirait « rien à gagner ».
   const segs=[["Voix garanties",garanties,RED],
     ...(gagnables==null?[]:[[GAGNABLES_LAB,gagnables,
       `repeating-linear-gradient(45deg,${RED} 0 6px,transparent 6px 12px)`]]),
-    ["Voix inaccessibles",inaccessibles,"#3885f4"]];
+    ["Voix inaccessibles",inaccessibles,"var(--serA)"]];
   const tot=segs.reduce((a,s)=>a+s[1],0)||1;
   const bar=segs.map(s=>s[1]?`<i style="width:${(100*s[1]/tot).toFixed(1)}%;background:${s[2]}" title="${s[0]} ${_nb(s[1])}"></i>`:"").join("");
   const lg=segs.map(s=>`<div class="crow"><span><i style="background:${s[2]}"></i>${s[0]}</span><b>${_nb(s[1])}</b></div>`).join("");

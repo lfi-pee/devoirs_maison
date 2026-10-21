@@ -38,11 +38,11 @@ function adminPanel(o){ const a=o&&o.adm; if(!a)return ""; const fr=window.__adm
     for(let i=5;i>=0;i--){ const fh=(fr.ageh||[])[i], ff=(fr.agef||[])[i];
       const th=effAdm(a.ageh[i]), tf=effAdm(a.agef[i]);
       rows+=`<div class="pyrow"><div class="ph">${fh!=null?`<u style="right:${fh/mx*100}%"></u>`:""}`+
-        `<i style="width:${(a.ageh[i]||0)/mx*100}%;background:#3b6ea5"`+
+        `<i style="width:${(a.ageh[i]||0)/mx*100}%;background:var(--serA)"`+
         (th?` title="Hommes ${ageT(i)} : ${a.ageh[i]} % — ${th}"`:"")+`></i></div>`+
         `<div class="pmid">${AGE_LAB[i]}</div>`+
         `<div class="pf">${ff!=null?`<u style="left:${ff/mx*100}%"></u>`:""}`+
-        `<i style="width:${(a.agef[i]||0)/mx*100}%;background:#cf2e5b"`+
+        `<i style="width:${(a.agef[i]||0)/mx*100}%;background:var(--serB)"`+
         (tf?` title="Femmes ${ageT(i)} : ${a.agef[i]} % — ${tf}"`:"")+`></i></div></div>`; }
     h+=lgd()+exp(sec("Pyramide des âges · 2021")+`<div class="pyr"><div class="pyrhead"><span>◀ Hommes</span><span>Femmes ▶</span></div>${rows}</div>`+
       (o.pop!=null?`<div class="hypnote">Sur ${nbf(o.pop)} habitant·es. Survolez une barre pour `+
@@ -52,8 +52,8 @@ function adminPanel(o){ const a=o&&o.adm; if(!a)return ""; const fr=window.__adm
       (o.pop!=null?` L'effectif de chaque barre — sur les <b>${nbf(o.pop)}</b> habitant·es de la commune — `+
         `se lit au survol.`:"")); }
   if(a.prop!=null||a.loc!=null) h+=lgd()+exp(sec("Logement · statut d'occupation · 2021")+
-    cmp("Propriétaires",a.prop,fr.prop,"#3b6ea5",100,null)+cmp("Locataires",a.loc,fr.loc,"#cf2e5b",100,null)+
-    cmp("dont HLM",a.hlm,fr.hlm,"#b08a2e",100,null),
+    cmp("Propriétaires",a.prop,fr.prop,"var(--serA)",100,null)+cmp("Locataires",a.loc,fr.loc,"var(--serB)",100,null)+
+    cmp("dont HLM",a.hlm,fr.hlm,"var(--serC)",100,null),
     `Part des <b>résidences principales</b> selon que le ménage est propriétaire ou locataire (dont HLM), INSEE 2021. `+
     `<b>· Fr</b> = moyenne France. Une commune fortement <b>locataire</b> et pauvre est un terrain prioritaire. `+
     `La base est un nombre de <b>ménages</b>, que la source ne publie pas ici : ces parts restent donc sans `+
@@ -65,7 +65,7 @@ function adminPanel(o){ const a=o&&o.adm; if(!a)return ""; const fr=window.__adm
     `La base — les <b>actif·ves occupé·es</b> de la commune — n'est pas servie dans les données : ces parts `+
     `restent sans effectif.`);
   if(a.mig&&a.mig.some(v=>v!=null)) h+=lgd()+exp(sec("Renouvellement de population · sur 1 an (2020→2021)")+
-    MIG_ROWS.map((lab,i)=>cmp(lab,a.mig[i],(fr.mig||[])[i],i===0?"#3b6ea5":"#cf2e5b",100)).join("")+
+    MIG_ROWS.map((lab,i)=>cmp(lab,a.mig[i],(fr.mig||[])[i],i===0?"var(--serA)":"var(--serB)",100)).join("")+
     (o.pop!=null?`<div class="hypnote">Sur ${nbf(o.pop)} habitant·es. Les parts sont mesurées à `+
       `l'échelle du canton (confidentialité de la source) puis appliquées à la commune : les `+
       `effectifs en héritent, ce sont des ordres de grandeur.</div>`:""),

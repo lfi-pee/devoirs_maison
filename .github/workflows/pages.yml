@@ -30,6 +30,7 @@ jobs:
           sparse-checkout: |
             /*.py
             /map.html
+            /Light.tokens.json
             /assets/
             /data_app/geo/regions.geojson
             /data_app/values/region.json
@@ -37,6 +38,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      # La charte graphique (Light.tokens.json) est la seule source des couleurs servies.
+      - run: python validation_charte.py
       - run: python build_site.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

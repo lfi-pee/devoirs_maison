@@ -178,7 +178,9 @@ relatif dépendrait de l'emplacement de la page.
 | Fichier | Rôle |
 | --- | --- |
 | `map.html` | **squelette** de la carte servie : balisage des panneaux + marqueurs `/*__CSS__*/` et `/*__JS__*/` |
-| `assets/map.css` | thème et mise en page de la carte |
+| `assets/map.css` | thème et mise en page de la carte ; ses couleurs sont les primitifs `--c-*` recopiés de la charte |
+| `Light.tokens.json` | **charte graphique** (export Figma des variables de couleur) : seule source des couleurs servies |
+| `validation_charte.py` | échoue si une couleur hors charte entre dans `assets/` ou `map.html` (lancé par la CI avant la publication) |
 | `assets/js/*.js` | logique de la carte, un fichier par responsabilité (config · data/geo · panneau info · panneau admin · panneau action · navigation · contrôles · recherche · **méthode des voix à conquérir** · notice modale · **formulaire de suggestion**) ; concaténée dans l'ordre des noms (préfixe `NN_`) |
 | `build_map.py` | `assemble_map(base)` : recolle squelette + CSS + JS en une string et injecte `__BASE__` |
 | `build_site.py` | écrit la page publiée : `_site/index.html` |

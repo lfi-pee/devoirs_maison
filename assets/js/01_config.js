@@ -175,7 +175,8 @@ function headLead(k){ const p=PAST.find(x=>x[0]===k); if(!p)return "";
 const AGE_LAB=["0-14","15-29","30-44","45-59","60-74","75+"];
 // indices tr_ : PAS=0,MAR=1,VELO=2,2ROUESMOT=3,VOIT=4,TCOM=5 ; ordre d'affichage = slide 28
 const TR_ROWS=[[4,"Voiture"],[5,"Transports en commun"],[1,"Marche à pied"],[2,"Vélo"],[3,"Deux-roues motorisé"],[0,"Pas de déplacement"]];
-const TR_COL=["#8a8a8a","#cf2e5b","#3b6ea5","#2e8b57","#b08a2e","#7d7591"];
+// séries de la charte (--serA…F dans map.css), dans l'ordre de TR_ROWS
+const TR_COL=["var(--serE)","var(--serB)","var(--serA)","var(--serD)","var(--serC)","var(--serF)"];
 const MIG_ROWS=["Même logement","Autre logement, même commune","Autre commune du département","Hors département en France","À l'étranger"];
 // scrutins comparés par le sélecteur de réservoir (report / différentiel / taux de perte)
 let selA="P22", selB="E24";
@@ -248,9 +249,11 @@ const theme=()=>document.documentElement.dataset.theme==="light"?"light":"dark";
 const CVARS=["geosel","geoline","geonodata","track","tick","softh","detbd","bg",
              "ramp0","ramp1","ramp2","ramp3","ramp4",
              // axe d'orientation politique : aplats (polN) et en-têtes de colonne (polNt)
-             "pol1","pol2","pol3","pol4","pol5","pol1t","pol2t","pol3t","pol4t","pol5t",
+             "pol1","pol2","pol3","pol4","pol5","pol6","pol1t","pol2t","pol3t","pol4t","pol5t",
              // rampe de la note de priorité (aplat de la pastille)
-             "note98","note94","note86","note75","note60","note45","note30","note00"];
+             "note98","note94","note86","note75","note60","note45","note30","note00",
+             // rampe « Neutres chauds » de la charte, sur laquelle est teint le fond de carte
+             "c-charbon","c-terre","c-cendres","c-dune","c-sable","c-parchemin","c-creme"];
 const C={};
 // Le parseur de couleurs, c'est le NAVIGATEUR : `fillStyle` accepte tout ce que CSS et
 // MapLibre acceptent (#rgb, rgb(), hsl(), hsla()) et le rend normalisé, là où une regex
@@ -270,10 +273,17 @@ function rvba(couleur){
 // Les cinq bornes de l'échelle, gardées en RVB : la choroplèthe INTERPOLE entre elles
 // (cf. colorer) au lieu d'arrondir à la plus proche, il lui faut des nombres.
 const RAMP=[];
+// Rampe « Neutres chauds » de la charte, en [luma, rvba] par luma croissante (cf. neutre).
+const NEUTRES=[];
+const _luma=v=>.2126*v[0]+.7152*v[1]+.0722*v[2];
 function syncColors(){ const cs=getComputedStyle(document.documentElement);
   for(const n of CVARS)C[n]=cs.getPropertyValue("--"+n).trim();
   RAMP.length=0;
-  for(let i=0;i<5;i++)RAMP.push(rvba(C["ramp"+i])||[128,128,128]); }
+  for(let i=0;i<5;i++)RAMP.push(rvba(C["ramp"+i])||[128,128,128]);
+  NEUTRES.length=0;
+  for(const n of ["charbon","terre","cendres","dune","sable","parchemin","creme"]){
+    const v=rvba(C["c-"+n]); if(v)NEUTRES.push([_luma(v),v]); }
+  NEUTRES.sort((a,b)=>a[0]-b[0]); }
 syncColors();
 // Le style OFM alimente les TROIS couches ci-dessous, chacune n'en gardant qu'une part.
 // MapLibre ne sait pas filtrer un style au chargement : on le retouche donc après coup, à
@@ -297,14 +307,29 @@ const NAME_FR=["coalesce",["get","name:fr"],["get","name:latin"],["get","name"]]
 // par couche qui périmerait au premier remaniement du style amont — au reste, le style dark
 // n'a pas une teinte, tout y est gris : il n'y a aucune couleur d'auteur à trahir.
 const LIFT = .62;                       // c' = (c/255)^LIFT : 12 → 39, 27 → 65, 60 → 106
-function eclaircir(couleur){
+// TEINTE DE LA CHARTE. Les deux styles sont en gris — positron froid, dark neutre — et
+// posaient un fond gris-bleu sous une interface crème et charbon. Chaque couleur du style
+// est donc ramenée sur la rampe « Neutres chauds » de Light.tokens.json, à LUMA égale : la
+// luma choisit les deux crans qui l'encadrent, et on interpole entre eux. La
+// correspondance est croissante, la hiérarchie terre / eau / routes / bâti est donc
+// intacte ; seule la teinte change, et aucun des deux styles n'en avait. Sous le charbon et
+// au-dessus du crème, la couleur se cale sur la borne (en sombre, le bâti à 34 après gamma).
+function neutre(v){
+  const n=NEUTRES; if(n.length<2)return v;
+  const y=_luma(v); let i=1; while(i<n.length-1&&y>n[i][0])i++;
+  const [y0,a]=n[i-1], [y1,b]=n[i], f=Math.max(0,Math.min(1,(y-y0)/(y1-y0)));
+  return [0,1,2].map(k=>a[k]+(b[k]-a[k])*f).concat(v[3]);
+}
+function teinter(couleur,sombre){
   const v=rvba(couleur); if(!v)return couleur;   // « interpolate », « zoom »… : tel quel
-  const f=x=>Math.round(255*Math.pow(x/255,LIFT));
-  return `rgba(${f(v[0])},${f(v[1])},${f(v[2])},${v[3]})`;
+  const g=sombre?v.map((x,k)=>k<3?255*Math.pow(x/255,LIFT):x):v;
+  const t=neutre(g), r=Math.round;
+  return `rgba(${r(t[0])},${r(t[1])},${r(t[2])},${t[3]})`;
 }
 // Une propriété de couleur peut être une expression : on descend dedans, les couleurs y
 // sont des feuilles (["interpolate",["linear"],["zoom"],5.8,"hsla(0,0%,85%,.53)",6,"#000"]).
-const eclaircirVal=v=>Array.isArray(v)?v.map(eclaircirVal):(typeof v==="string"?eclaircir(v):v);
+const teinterVal=(v,sombre)=>Array.isArray(v)?v.map(x=>teinterVal(x,sombre)):
+  (typeof v==="string"?teinter(v,sombre):v);
 function shapeStyle(gl,symbols,encre){
   const sombre=theme()!=="light";
   for(const l of gl.getStyle().layers){
@@ -314,8 +339,8 @@ function shapeStyle(gl,symbols,encre){
     // dessiner, et le gamma ci-dessus, en remontant ce fond de 12 à 39, triplait ce voile.
     // Ne restent donc en surimpression que les objets — routes, eau, bâti, voies ferrées.
     if(encre&&l.type==="background"){gl.removeLayer(l.id);continue;}
-    if(sombre)for(const k in l.paint||{})
-      if(k.includes("color"))gl.setPaintProperty(l.id,k,eclaircirVal(l.paint[k]));
+    for(const k in l.paint||{})
+      if(k.includes("color"))gl.setPaintProperty(l.id,k,teinterVal(l.paint[k],sombre));
     // On ne retouche QUE les couches dont le libellé lit déjà un nom. Les écussons
     // d'autoroute affichent un NUMÉRO (`["to-string",["get","ref"]]`) : leur passer NAME_FR
     // laissait des cartouches VIDES sur la carte (aucun `name` sur ces tronçons). Le test
@@ -475,17 +500,17 @@ const NIV_PRIO=[[90,"Priorité critique"],[60,"Priorité forte"],
 const niveauPrio=v=>{ const n=Math.round(v);
   return (NIV_PRIO.find(([s])=>n>s)||NIV_PRIO[NIV_PRIO.length-1])[1]; };
 const nonMesure=v=>v==null||(typeof v==="number"&&isNaN(v));
-// Rampe de la note (lfi-pee/mobilite-vote-france#1) : huit crans sur le score absolu.
+// Rampe de la note : huit crans de la charte sur le score absolu (--note* dans map.css).
 // Lue sur l'ENTIER AFFICHÉ, comme le mot de niveau — une note de 93,8 s'écrit « 94 » et
 // ne peut pas porter la couleur du cran d'en dessous pendant que le nombre dit 94.
 const NOTE_RAMPE=[[98,"note98"],[94,"note94"],[86,"note86"],[75,"note75"],
                   [60,"note60"],[45,"note45"],[30,"note30"],[0,"note00"]];
 const couleurNote=v=>C[(NOTE_RAMPE.find(([s])=>Math.round(v)>=s)||NOTE_RAMPE[NOTE_RAMPE.length-1])[1]];
-// Encre de la pastille : le cran le plus sombre de la rampe (#800026) et le plus clair
-// (#FEEFB3) ne peuvent pas porter la même. On calcule les DEUX rapports de contraste
-// (WCAG) et on garde le meilleur, plutôt que de couper sur un seuil de luminance : au
-// cran #E75355 le seuil donnait le crème à 3,55:1 là où le charbon vaut 4,35:1 — le
-// seuil se trompait d'encre sur un cran. Le calcul, lui, reste juste si la rampe est
+// Encre de la pastille : le cran le plus sombre de la rampe (carmin) et le plus clair
+// (citron) ne peuvent pas porter la même. On calcule les DEUX rapports de contraste
+// (WCAG) et on garde le meilleur, plutôt que de couper sur un seuil de luminance : près
+// du milieu de la rampe un seuil se trompe d'encre (au vermillon, le crème fait 3,4:1 et
+// le charbon 4,5:1). Le calcul, lui, reste juste si la rampe est
 // retouchée dans map.css. Repli sur le charbon si la couleur n'est pas encore lue.
 const _lumi=c=>{ const l=[c[0],c[1],c[2]].map(x=>{ x/=255;
     return x<=.04045?x/12.92:Math.pow((x+.055)/1.055,2.4); });

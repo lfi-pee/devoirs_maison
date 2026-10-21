@@ -291,18 +291,20 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
   // Légis. 2024 = candidature d'union Nouveau Front Populaire : la barre reprend les bandes
   // de couleur du logo NFP (vert / rouge / jaune / violet / rouge) pour la distinguer d'un
   // coup d'œil des scrutins où LFI se présentait seule. M26 : « 0 » = pas de tête de liste LFI → « · ».
-  const NFP_RED="#E2001A",
-    NFP_BAND="linear-gradient(to bottom,#00A95C 0 20%,#E2001A 20% 40%,#FFD500 40% 60%,#C8017E 60% 80%,#E2001A 80% 100%)",
+  // Les bandes du logo, transposées au cran le plus proche de la charte : sapin, rouge,
+  // or, améthyste, rouge.
+  const NFP_BAND="linear-gradient(to bottom,var(--c-sapin) 0 20%,var(--c-rouge) 20% 40%,"+
+      "var(--c-or) 40% 60%,var(--c-amethyste) 60% 80%,var(--c-rouge) 80% 100%)",
     trendVal=sc=>{const v=o[`lfi_${sc}`]; return (sc==="M26"&&!v)?null:v;},
     // Sous le taux, les VOIX du scrutin : une courbe de pourcentages monte parfois là où
     // le nombre de voix baisse (registre en croissance), et c'est le nombre qui compte.
     trendVx=sc=>{const v=trendVal(sc); return v==null?"":nbf(o[`lfiv_${sc}`]);},
-    trendBg=sc=>sc==="L24"?NFP_BAND:"var(--cram)", trendTx=sc=>sc==="L24"?NFP_RED:"var(--cram)";
+    trendBg=sc=>sc==="L24"?NFP_BAND:"var(--cram)";
   if(SCR.some(([sc])=>trendVal(sc)!=null)){
     elec+=exp(sec("Évolution du vote LFI")+`<div class="trend">`+
       SCR.map(([sc,lab])=>{const v=trendVal(sc);
         return `<div class="tcol"><div class="tbarwrap"><div class="tbar" style="height:${w(v,45)}%;background:${trendBg(sc)}"></div></div>`+
-               `<div class="tv" style="color:${trendTx(sc)}">${v==null?"·":v}</div>`+
+               `<div class="tv">${v==null?"·":v}</div>`+
                `<div class="tn">${trendVx(sc)}</div><div>${lab.split(' ')[0]}</div></div>`;}).join("")+`</div>`+
       municNote(o),
       `Vote LFI en % des inscrits à chaque scrutin, avec le <b>nombre de voix</b> obtenues sous chaque `+
@@ -319,7 +321,7 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
     const ins=inscScr(o,"E24"), vot=votScr(o,"E24"),
       nabs=(o.abst!=null)?o.abst:((ins!=null&&vot!=null)?ins-vot:null);
     elec+=exp(sec("Participation · Europ. 2024")+
-      barRow("Participation",o.part_E24,"#2e8b57",100,vot!=null?`${nbf(vot)} votant·es`:"")+
+      barRow("Participation",o.part_E24,"var(--serD)",100,vot!=null?`${nbf(vot)} votant·es`:"")+
       `<div class="row rowc"><span>Abstention</span><b>${abst} %`+
         (nabs!=null?` <span class="cnt">· ${nbf(nabs)} personnes</span>`:"")+`</b></div>`+
       (ins!=null?`<div class="row"><span>Inscrit·es (registre 2024)</span><b>${nbf(ins)}</b></div>`:""),
@@ -361,11 +363,12 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
       full=["LFI-PCF","PS-EELV","Macron","LR-DVD","RN-ED","Autres"],
       // Les cinq crans de l'axe, dans l'ordre des blocs, plus le gris d'« Autres » — qui
       // n'est pas sur l'axe. `cols` colore des APLATS (segments, pastilles de légende),
-      // `colsT` les seuls en-têtes de colonne, qui sont du texte à 10 px : le navy
+      // `colsT` les seuls en-têtes de colonne, qui sont du texte à 10 px : le saphir
       // « très à droite » y serait invisible en thème sombre (cf. --polNt dans map.css).
-      cols=[C.pol1,C.pol2,C.pol3,C.pol4,C.pol5,"#8a8a8a"],
-      colsT=[C.pol1t,C.pol2t,C.pol3t,C.pol4t,C.pol5t,"#8a8a8a"], gris="rgba(140,140,150,.45)",
-      hachure="repeating-linear-gradient(135deg,rgba(140,140,150,.30) 0 5px,rgba(140,140,150,.10) 5px 10px)";
+      // Abstention et non-ventilé : le gris moyen de la charte, translucide.
+      cols=[C.pol1,C.pol2,C.pol3,C.pol4,C.pol5,C.pol6],
+      colsT=[C.pol1t,C.pol2t,C.pol3t,C.pol4t,C.pol5t,"var(--mut)"], gris="rgba(112,112,112,.45)",
+      hachure="repeating-linear-gradient(135deg,rgba(112,112,112,.30) 0 5px,rgba(112,112,112,.10) 5px 10px)";
     // dernier scrutin RÉELLEMENT ventilé : une barre entièrement « non ventilé » (le cas
     // des municipales dans une petite commune) n'apprendrait rien en tête de fiche.
     let li=-1; window.__scr.forEach((s,i)=>{
@@ -409,7 +412,7 @@ function infoPanel(nom,o,niveau,code){ const info=$("info"); lastInfo=o?{nom,o,n
         `dans la participation, jamais dans un bloc — un « · » sur la ligne veut dire `+
         `<b>non mesuré</b>, pas « zéro voix ».</p>`+
         `<div class="rwrap"><table class="recompo"><thead><tr><th></th>`+
-        heads.map((x,j)=>`<th style="color:${colsT[j]||'#999'}">${x}</th>`).join("")+
+        heads.map((x,j)=>`<th style="color:${colsT[j]||'var(--mut)'}">${x}</th>`).join("")+
         (avecBase?`<th class="ins">Inscrits</th>`:"")+
         `</tr></thead><tbody>${rows}</tbody></table></div>`); } }
 

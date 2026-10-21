@@ -1,22 +1,24 @@
-  /* DEUX THÈMES, UNE SEULE FEUILLE : toutes les couleurs d'interface passent par les
-     tokens ci-dessous. Le thème sombre (défaut, cohérent avec le style OpenFreeMap dark)
-     est défini sur :root ; le thème clair ne redéfinit que les tokens, sous
-     :root[data-theme="light"]. Aucune règle plus bas ne code une couleur en dur, à
-     l'exception des couleurs de DONNÉES (nuances politiques, échelle bleu→rouge de la
-     choroplèthe), identiques dans les deux thèmes.
+  /* DEUX THÈMES, UNE SEULE FEUILLE : toutes les couleurs passent par les tokens
+     ci-dessous. Le thème sombre (défaut, cohérent avec le style OpenFreeMap dark) est
+     défini sur :root ; le thème clair ne redéfinit que les tokens, sous
+     :root[data-theme="light"]. Aucune règle plus bas ne code une couleur en dur.
 
-     ── CHARTE GRAPHIQUE DE LA FRANCE INSOUMISE ──
-     https://lafranceinsoumise.fr/charte-graphique/ — palette 2027 :
-       Violet  #4C0297 (impression) · #7b13d6 (écran)
-       Rouge   #D1271C (impression) · #f91616 (écran)
-       Crème   #FFFCF4        Charbon #212320
-     Le THÈME CLAIR est la charte telle qu'elle est publiée : crème, charbon, violet
-     d'impression. Le THÈME SOMBRE l'inverse (crème sur charbon) ; la charte ne prévoit
-     rien pour un fond sombre, où le violet et le rouge d'écran tombent respectivement à
-     2,2:1 et 3,9:1 sur le charbon — invisibles. Ils y sont donc ÉCLAIRCIS à teinte et
-     saturation constantes, jusqu'à 4,5:1 (AA) sur la plus claire des surfaces de panneau
-     (--pbg2) : --lav #b875f3 et --cram #fb5f5f. Chaque couple texte/fond de cette feuille
-     a été vérifié à ce seuil ; toute retouche d'un token doit l'être aussi. */
+     ── CHARTE GRAPHIQUE : Light.tokens.json ──
+     L'export Figma de la charte (à la racine du dépôt) est la SEULE source des couleurs.
+     Il est recopié tel quel en tokens PRIMITIFS (--c-*), un par variable Figma, et tout
+     le reste de la feuille — interface comme données — ne fait que les référencer. Les
+     seules écritures numériques sont les fonds TRANSLUCIDES, rgba() d'un primitif nommé
+     en commentaire (une variable CSS ne se compose pas avec un alpha sans color-mix).
+     `python validation_charte.py` vérifie qu'aucune couleur hors charte n'est entrée
+     dans assets/ : à relancer à chaque retouche.
+
+     Le fichier ne décrit que le thème CLAIR, et ses rôles s'y lisent : le groupe « Noirs
+     et blanc » est la hiérarchie du texte (noir, gris foncé, gris moyen), gris clair
+     les filets, blanc le papier. Le THÈME SOMBRE n'invente aucune teinte : il prend les
+     crans clairs des mêmes rampes (lilas pour le violet, corail pour le rouge), parce
+     que le violet et le rouge de base tombent à 1,3:1 et 3,0:1 sur le charbon. Chaque
+     couple texte/fond a été vérifié au seuil AA (4,5:1, 3,5:1 pour --mut2) ; toute
+     retouche d'un token doit l'être aussi. */
   /* Union Gothic, police de TITRES du kit graphique M27. Variable sur deux axes : la
      graisse (400 → 1000) et la chasse (50 % → 200 %), que `font-stretch` pilote. Le kit
      prescrit la coupe Condensed, soit 83 % (--ch-titre). Licence CC BY-NC-ND : le fichier
@@ -24,6 +26,32 @@
   @font-face{font-family:"Union Gothic";src:url("fonts/union_gothic-variable.ttf") format("truetype");
     font-weight:400 1000;font-stretch:50% 200%;font-display:swap}
   :root{
+    /* — Primitifs : Light.tokens.json, groupe par groupe, sans retouche — */
+    /* Noirs et blanc */
+    --c-noir:#212320; --c-gris-fonce:#3C3C3B; --c-gris-moyen:#707070;
+    --c-gris-clair:#DADADA; --c-blanc:#FFFCF4;
+    /* Violet et rouge */
+    --c-violet:#4C0297; --c-violet-clair:#E5CBFF; --c-rouge:#D1271C; --c-rouge-clair:#FFD2CF;
+    /* Rouges */
+    --c-rosee:#FDECEA; --c-corail:#F9A89E; --c-vermillon:#E85A50; --c-carmin:#8F120A;
+    --c-bordeaux:#4E0600;
+    /* Violets */
+    --c-lavande:#EDE5FF; --c-lilas:#C9ADFF; --c-amethyste:#9C6EE8; --c-pourpre:#330068;
+    --c-nuit:#1D003C;
+    /* Neutres chauds */
+    --c-creme:#FFFCF4; --c-parchemin:#F5F0E4; --c-sable:#E6DFC9; --c-dune:#C4BBAA;
+    --c-cendres:#7A7264; --c-terre:#3A3732; --c-charbon:#212320;
+    /* Accents */
+    --c-citron:#FFFBE6; --c-soleil:#FFE566; --c-or:#F5C800; --c-miel:#B88E00;
+    --c-ocre:#6B5100;
+    /* Oranges */
+    --c-peche:#FFF1E6; --c-abricot:#FFB87A; --c-orange:#F06B00; --c-cuivre:#B04E00;
+    --c-ocre-orange:#612B00;
+    /* Bleus ciel, Bleus saphir, Verts sapin, Ambres */
+    --c-brume:#E8F6FF; --c-ciel:#A8DEFF; --c-azur:#3AADEE; --c-cobalt:#0078C2;
+    --c-marine:#004880; --c-saphir-50:#E8F6FF; --c-saphir:#1D3E9E;
+    --c-sapin-50:#EDFBF3; --c-sapin:#186842; --c-ambre-50:#FFF8E7; --c-ambre:#B97200;
+
     /* Typographie du kit graphique M27 :
          titres   Union Gothic Condensed, 1000 pour le titre du site, 700 pour les
                   titres de fiche et de fenêtre (le H2 du kit) ;
@@ -38,72 +66,81 @@
        sombre étant violet, l'ombre du logo M27 blanc y passe au charbon ; sur crème, violet
        et ombre violet clair, comme le logo M27 d'origine. */
     --iso-txt:var(--strong); --iso-ombre:var(--pbgs);
+
+    /* — Thème sombre — */
     /* --pbgs : même teinte que --pbg mais OPAQUE, pour les éléments collants qui
        doivent masquer le contenu qui défile dessous (poignée du bottom-sheet). */
-    --pbg:rgba(33,35,32,.93); --pbgs:#212320; --pbg2:#2b2e2a; --pbg3:#3a3e39; --bord:#474b45;
-    --bg:#151714;
-    --txt:#fffcf4; --mut:#a9a89e; --mut2:#8b8a80; --lav:#b875f3; --cram:#fb5f5f;
+    --pbg:rgba(33,35,32,.93); /* charbon */ --pbgs:var(--c-charbon); --pbg2:var(--c-terre);
+    --pbg3:var(--c-gris-fonce); --bord:var(--c-gris-fonce);
+    --bg:var(--c-charbon);
+    /* texte 15,5:1 · secondaire 11,3:1 · tertiaire 8,3:1 sur le charbon (6,2:1 sur la
+       terre des champs) — gris moyen n'y ferait que 3,2:1, d'où la dune. */
+    --txt:var(--c-creme); --mut:var(--c-gris-clair); --mut2:var(--c-dune);
+    --lav:var(--c-lilas); --cram:var(--c-corail);
     /* fort = texte à contraste maximal sur fond de panneau ; onacc = texte sur fond accentué */
-    --strong:#fff; --onacc:#fffcf4;
-    /* Texte posé sur un APLAT --cram (pastille de levier, moitié gauche de la balance).
-       Une seule couleur ne peut pas être à la fois lisible SUR le charbon et PORTER du
-       crème : les deux contrastes se multiplient pour donner l'amplitude totale du thème
-       (15,45), et il en faudrait 4,5 × 4,5 = 20,25. Le thème sombre écrit donc en charbon
-       sur son rouge éclairci (5,2:1) et le thème clair en crème sur le rouge de la charte
-       (5,1:1) — l'ancien blanc sur cramoisi ne donnait que 3,8:1. */
-    --oncram:#212320;
-    --acc:#7b13d6; --acc2:#9333e8;
+    --strong:var(--c-creme); --onacc:var(--c-creme);
+    /* Texte posé sur un APLAT --cram (pastille de levier, moitié gauche de la balance) :
+       charbon sur corail en sombre (8,4:1), crème sur le rouge de base en clair (5,1:1). */
+    --oncram:var(--c-charbon);
+    /* --acc : fond des commandes actives, porte --onacc (crème sur violet : 11,6:1).
+       --acc2 : son survol, un cran plus profond. --accl : fin du dégradé de la règle
+       graduée — le violet de texte et l'accent sont le même violet en clair, et le
+       dégradé --acc → --lav y était plat. */
+    --acc:var(--c-violet); --acc2:var(--c-pourpre); --accl:var(--c-lilas);
     /* teintes violettes translucides : fonds de cartes internes (soft) et survol (softh) */
-    --soft:rgba(123,19,214,.18); --softh:rgba(123,19,214,.28);
-    --track:#343830; --tick:#fffcf4; --sh:rgba(0,0,0,.5);
-    --bnr1:rgba(123,19,214,.96); --bnr2:rgba(33,35,32,.94);
+    --soft:rgba(156,110,232,.12); /* améthyste */ --softh:rgba(156,110,232,.22); /* améthyste */
+    --track:var(--c-gris-fonce); --tick:var(--c-creme); --sh:rgba(33,35,32,.8); /* charbon */
+    --bnr1:rgba(76,2,151,.96); /* violet */ --bnr2:rgba(33,35,32,.94); /* charbon */
     /* bloc « plan d'action » / « conclusions » : carte violette plus dense */
-    --actbg:#2a1044; --actbd:#4b1f7a; --acttx:#f4ecfd; --actld:#cfa4f7; --actmu:#bda2d6;
+    --actbg:var(--c-nuit); --actbd:var(--c-violet); --acttx:var(--c-lavande);
+    --actld:var(--c-lilas); --actmu:var(--c-violet-clair);
     /* volet de détail (méthodo) */
-    --detbg:rgba(123,19,214,.16); --detbd:#6a2ba8; --dettx:#cfc8dc;
-    /* avertissement : jaune de la charte (#f9c900), éclairci pour rester lisible */
-    --warnbg:rgba(249,201,0,.14); --warnbd:rgba(249,201,0,.45); --warntx:#f0cf5c;
+    --detbg:rgba(156,110,232,.12); /* améthyste */ --detbd:var(--c-amethyste); --dettx:var(--c-sable);
+    /* avertissement : l'or des accents en fond, le soleil en texte (12,6:1) */
+    --warnbg:rgba(245,200,0,.14); /* or */ --warnbd:rgba(245,200,0,.45); /* or */ --warntx:var(--c-soleil);
     /* couleurs lues par le JS (contours des polygones, zones sans données) */
-    --geosel:#fffcf4; --geoline:#151714; --geonodata:#3a3d38;
-    /* Échelle de la choroplèthe (rang : bleu = faible → rouge = élevé). ÉCHAPPE À LA
-       CHARTE, comme toutes les couleurs de données : c'est un encodage divergent, dont
-       la charte ne fournit pas l'équivalent, et le repeindre en violet/rouge du mouvement
-       ferait lire une valeur là où il n'y a qu'une marque. Le thème sombre creuse la
-       luminosité au centre (violet-gris) et sature aux extrêmes ; ses demi-tons
-       (bleu et rouge foncés) deviendraient boueux sur fond clair, d'où une seconde échelle
-       de type RdBu. Dans les deux cas le ton médian reste nettement distinct du fond de
-       carte ET du gris « pas de données » (--geonodata), qui lui doit s'en approcher. */
-    --ramp0:#3b8fd4; --ramp1:#2d5b82; --ramp2:#46415a; --ramp3:#9e3b34; --ramp4:#d23f2d;
-    /* Les deux ÉTIQUETTES de la légende (« – faible », « élevé + ») : mêmes teintes que les
-       bornes de la rampe, mais ce sont du TEXTE et non des aplats — elles doivent donc
-       passer le seuil de lisibilité, que les bornes elles-mêmes n'ont pas à tenir. Elles
-       étaient codées en dur dans map.html (#2166ac / #b2182b), invisibles en thème sombre
-       (2,7:1 et 2,3:1) et insensibles au thème. */
-    --rampl:#4d9ad8; --ramph:#df7568;
-    /* AXE D'ORIENTATION POLITIQUE — lfi-pee/mobilite-vote-france#1, à l'identique.
-       Les cinq crans du ticket recouvrent exactement la recomposition en blocs déjà
-       servie ici : LFI-PCF = très à gauche, PS-EELV = à gauche, Macron = mixte,
-       LR-DVD = à droite, RN-EXD = très à droite (« Autres » n'est pas sur l'axe et
-       reste gris). Ces cinq-là sont les valeurs du ticket, sans retouche, et ne
-       changent pas avec le thème : ce sont des APLATS (segments de barre, pastilles
-       de légende, barres du rapport de force).
-       --polNt : les mêmes, pour les seuls EN-TÊTES DE COLONNE du tableau de
-       recomposition, qui sont du TEXTE à 10 px. C'est le même partage que
-       --ramp0..4 / --rampl-ramph plus haut, et il remplace l'ancienne exception
-       « bleus LR / RN » : le navy « très à droite » #1E3588 tombe à 1,45:1 sur le
-       charbon (l'en-tête RN y était littéralement invisible) et le bleu clair
-       « à droite » #5CB7FC à 2,13:1 sur le crème. Chaque variante est le cran du
-       ticket éclairci ou assombri à teinte constante jusqu'à 4,5:1, et rien d'autre. */
-    --pol1:#F02248; --pol2:#FF2E8B; --pol3:#A96CDE; --pol4:#5CB7FC; --pol5:#1E3588;
-    --pol1t:#f34969; --pol2t:#FF2E8B; --pol3t:#aa6ede; --pol4t:#5CB7FC; --pol5t:#6a84de;
-    /* Rampe de la NOTE DE PRIORITÉ — lfi-pee/mobilite-vote-france#1, à l'identique.
-       Huit crans sur un score ABSOLU de 0 à 100 : c'est la note de la fiche, et non la
-       carte, qui code un écart à la médiane des zones affichées et garde donc sa rampe
-       divergente (--ramp0..4). Servie en APLAT dans la pastille du chiffre de tête, avec
-       une encre choisie par luminance (charbon ou crème) : posée en couleur de texte,
-       le cran #FEEFB3 ferait 1,12:1 sur le crème et le #800026 1,47:1 sur le charbon. */
-    --note98:#800026; --note94:#BD0026; --note86:#E75355; --note75:#FC775E;
-    --note60:#FDA56A; --note45:#FDC176; --note30:#FEDF7E; --note00:#FEEFB3;
+    --geosel:var(--c-creme); --geoline:var(--c-charbon); --geonodata:var(--c-terre);
+    /* Échelle de la choroplèthe (rang : bleu = faible → rouge = élevé), en crans des
+       rampes « Bleus ciel » et « Rouges ». Les deux moitiés se répondent en luminance
+       (cobalt .17 / rouge .15, marine .06 / carmin .06). Le thème sombre creuse le centre
+       — le pourpre, mi-chemin du bleu et du rouge — et sature aux extrêmes ; le thème
+       clair l'inverse (violet clair au centre). Dans les deux cas le ton médian se
+       distingue du fond de carte ET du « pas de données » (--geonodata) par sa TEINTE :
+       violette, là où ces deux-là sont des neutres chauds. */
+    --ramp0:var(--c-cobalt); --ramp1:var(--c-marine); --ramp2:var(--c-pourpre);
+    --ramp3:var(--c-carmin); --ramp4:var(--c-rouge);
+    /* Les deux ÉTIQUETTES de la légende (« – faible », « élevé + ») : même famille que
+       les bornes de la rampe, mais ce sont du TEXTE et non des aplats — elles passent
+       donc le seuil de lisibilité, que les bornes elles-mêmes n'ont pas à tenir. */
+    --rampl:var(--c-azur); --ramph:var(--c-corail);
+    /* AXE D'ORIENTATION POLITIQUE — cinq crans, dans l'ordre de la recomposition en
+       blocs : LFI-PCF = très à gauche, PS-EELV = à gauche, Macron = mixte, LR-DVD = à
+       droite, RN-EXD = très à droite ; --pol6 pour « Autres », qui n'est pas sur l'axe.
+       Un dégradé rouge → améthyste → bleu, symétrique : le cran extrême est le plus
+       saturé de sa famille, le cran modéré le plus clair. Ce sont des APLATS (segments
+       de barre, pastilles de légende), identiques dans les deux thèmes.
+       --polNt : les mêmes familles pour les seuls EN-TÊTES DE COLONNE du tableau de
+       recomposition, qui sont du TEXTE à 10 px — le saphir y ferait 1,7:1 sur le
+       charbon, le corail 1,8:1 sur le crème. Chaque variante est le cran de la même
+       rampe qui passe 4,5:1 ; « Autres » et les colonnes hors axe sont en --mut. */
+    --pol1:var(--c-rouge); --pol2:var(--c-corail); --pol3:var(--c-amethyste);
+    --pol4:var(--c-azur); --pol5:var(--c-saphir); --pol6:var(--c-gris-moyen);
+    --pol1t:var(--c-corail); --pol2t:var(--c-rouge-clair); --pol3t:var(--c-lilas);
+    --pol4t:var(--c-ciel); --pol5t:var(--c-azur);
+    /* Rampe de la NOTE DE PRIORITÉ — six paliers sur le score ABSOLU de 0 à 100, ceux de
+       la légende de priorité (hors Light.tokens.json, d'où les valeurs en clair ; cf.
+       RAMPE_PRIORITE dans validation_charte.py). Un palier par niveau de NIV_PRIO
+       (01_config.js) : faible ≤ 20 · secondaire ≤ 40 · importante ≤ 60 · haute ≤ 80 ·
+       majeure ≤ 90 · critique au-delà. Servie en APLAT — zones de la carte, pastille du
+       chiffre de tête, légende —, avec l'encre (charbon ou crème) qui contraste le mieux
+       (cf. encreNote) : le jaune ne porte pas de texte crème, ni le bordeaux du charbon. */
+    --prio1:#F4ED0F; --prio2:#F8C71F; --prio3:#FF7107;
+    --prio4:#E83400; --prio5:#B31F00; --prio6:#790000;
+    /* Séries des profils socio (pyramide, logement, déplacements, mobilité) et de la
+       fiche électorale : des aplats, identiques dans les deux thèmes. --serA porte
+       aussi du crème à 4,6:1 (moitié droite de la balance). */
+    --serA:var(--c-cobalt); --serB:var(--c-rouge); --serC:var(--c-miel);
+    --serD:var(--c-sapin); --serE:var(--c-gris-moyen); --serF:var(--c-amethyste);
     /* hauteur du bandeau d'accueil : ajustée par JS à la hauteur réelle (0 si masqué),
        elle décale tous les panneaux ancrés en haut pour qu'aucun ne le recouvre. */
     --banner-h:44px;
@@ -118,28 +155,32 @@
        --info-t : haut de la fiche = sous TOUT ce qui est ancré en haut. */
     --top-b:97px; --bar-b:97px; --sub-w:0px; --info-t:140px;
   }
-  /* Thème clair = la charte telle qu'elle est publiée : papier crème (#FFFCF4), encre
-     charbon (#212320), violet et rouge d'IMPRESSION (#4C0297, #D1271C) — qui sont aussi
-     les deux qui passent le seuil AA sur crème (11,6:1 et 5,1:1), là où leurs variantes
-     d'écran ne donneraient que 7,1:1 et 3,7:1. Le violet d'écran (#7b13d6) sert de survol. */
+  /* Thème clair = la charte telle que le fichier la décrit : papier blanc (crème), encre
+     noire (charbon), hiérarchie du texte en gris foncé (10,8:1) et gris moyen (4,8:1),
+     filets gris clair ; violet et rouge de base (11,6:1 et 5,1:1 sur le papier). */
   :root[data-theme="light"]{
-    --pbg:rgba(255,252,244,.94); --pbgs:#fffcf4; --pbg2:#f7f2e4; --pbg3:#ece5d3; --bord:#d8d0bd;
-    --bg:#f1ebdd;
-    --txt:#212320; --mut:#5c5e58; --mut2:#787a73; --lav:#4c0297; --cram:#d1271c;
-    --strong:#111311; --onacc:#fffcf4; --oncram:#fffcf4;
-    --acc:#4c0297; --acc2:#7b13d6;
-    --soft:rgba(76,2,151,.06); --softh:rgba(76,2,151,.14);
-    --track:#e6dfcd; --tick:#212320; --sh:rgba(33,35,32,.18);
-    --bnr1:rgba(123,19,214,.20); --bnr2:rgba(255,252,244,.92);
-    --actbg:#f6effc; --actbd:#ddc9f2; --acttx:#241a33; --actld:#4c0297; --actmu:#5b5468;
-    --detbg:rgba(76,2,151,.07); --detbd:#a482cd; --dettx:#332a45;
-    --warnbg:rgba(180,120,0,.13); --warnbd:rgba(180,120,0,.42); --warntx:#7a5200;
-    --geosel:#fffcf4; --geoline:#4a4740; --geonodata:#ddd6c6;
-    --ramp0:#0d6ba8; --ramp1:#6ba8d1; --ramp2:#c6bdd4; --ramp3:#e8916d; --ramp4:#c4231c;
-    --rampl:#0d6ba8; --ramph:#c4231c;
-    --pol1t:#e71038; --pol2t:#e50066; --pol3t:#9951d8; --pol4t:#0477cf; --pol5t:#1E3588;
+    --pbg:rgba(255,252,244,.94); /* crème */ --pbgs:var(--c-creme); --pbg2:var(--c-parchemin);
+    --pbg3:var(--c-sable); --bord:var(--c-gris-clair);
+    --bg:var(--c-parchemin);
+    --txt:var(--c-noir); --mut:var(--c-gris-fonce); --mut2:var(--c-gris-moyen);
+    --lav:var(--c-violet); --cram:var(--c-rouge);
+    --strong:var(--c-noir); --onacc:var(--c-blanc); --oncram:var(--c-blanc);
+    --acc:var(--c-violet); --acc2:var(--c-pourpre); --accl:var(--c-amethyste);
+    --soft:rgba(76,2,151,.06); /* violet */ --softh:rgba(76,2,151,.14); /* violet */
+    --track:var(--c-sable); --tick:var(--c-noir); --sh:rgba(33,35,32,.18); /* charbon */
+    --bnr1:rgba(229,203,255,.96); /* violet clair */ --bnr2:rgba(255,252,244,.92); /* crème */
+    --actbg:var(--c-lavande); --actbd:var(--c-lilas); --acttx:var(--c-nuit);
+    --actld:var(--c-violet); --actmu:var(--c-gris-fonce);
+    --detbg:rgba(76,2,151,.07); /* violet */ --detbd:var(--c-amethyste); --dettx:var(--c-terre);
+    --warnbg:rgba(245,200,0,.13); /* or */ --warnbd:rgba(185,114,0,.42); /* ambre */ --warntx:var(--c-ocre);
+    --geosel:var(--c-creme); --geoline:var(--c-terre); --geonodata:var(--c-sable);
+    --ramp0:var(--c-cobalt); --ramp1:var(--c-azur); --ramp2:var(--c-violet-clair);
+    --ramp3:var(--c-corail); --ramp4:var(--c-rouge);
+    --rampl:var(--c-cobalt); --ramph:var(--c-rouge);
+    --pol1t:var(--c-rouge); --pol2t:var(--c-carmin); --pol3t:var(--c-violet);
+    --pol4t:var(--c-cobalt); --pol5t:var(--c-saphir);
   }
-  :root[data-theme="light"]{--iso-txt:var(--lav); --iso-ombre:color-mix(in srgb,var(--lav) 30%,var(--pbgs))}
+  :root[data-theme="light"]{--iso-txt:var(--lav); --iso-ombre:var(--c-violet-clair)}
   html,body{margin:0;height:100%;font-family:var(--f-corps);background:var(--bg);color:var(--txt)}
   /* les champs de formulaire n'héritent pas de la police du document */
   button,input,select,textarea{font-family:inherit}
@@ -313,7 +354,7 @@
   #info .mnote{margin-top:7px;font-size:11px;line-height:1.4;color:var(--mut);border-left:2px solid var(--cram);padding-left:7px}
   #info .bal{display:flex;height:22px;border-radius:6px;overflow:hidden;font-size:11px;color:var(--onacc);font-weight:700}
   #info .bal .bg{background:var(--cram);color:var(--oncram);display:flex;align-items:center;justify-content:center;min-width:30px}
-  #info .bal .bn{background:#3b6ea5;display:flex;align-items:center;justify-content:center;min-width:30px}
+  #info .bal .bn{background:var(--serA);display:flex;align-items:center;justify-content:center;min-width:30px}
   #info .exp .exph{cursor:pointer;position:relative;padding-right:15px}
   #info .exp .exph::after{content:"›";position:absolute;right:1px;top:1px;color:var(--lav);font-weight:700}
   /* Groupes dépliables : rangent l'analyse détaillée derrière un clic. Repliés par défaut
@@ -368,10 +409,10 @@
      du rail — la réserve de 20 px n'y serait qu'un blanc. */
   .notesc.nocur{padding-top:10px}
   .notescr{position:relative;height:9px;border-radius:5px;background:var(--track)}
-  /* --acc → --acc2 et non --acc → --lav : en thème clair, l'accent et le violet de texte
-     sont tous deux le violet d'impression de la charte, et le dégradé y était plat. */
+  /* --acc → --accl et non --acc → --lav : en thème clair, l'accent et le violet de texte
+     sont tous deux le violet de base de la charte, et le dégradé y était plat. */
   .notescr i{display:block;height:100%;border-radius:5px;
-       background:linear-gradient(90deg,var(--acc),var(--acc2))}
+       background:linear-gradient(90deg,var(--acc),var(--accl))}
   .notescr u{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;
        background:var(--tick);opacity:.55}
   .notescc{position:absolute;top:-19px;transform:translateX(-50%);white-space:nowrap;
