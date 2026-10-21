@@ -103,8 +103,20 @@ function aggregateSelection(){
 function openAggregate(){ const o=aggregateSelection(); if(!o)return;
   infoPanel(selLabel(),o,"multi",null); }
 
+// Hors de la carte d'un département, le mode s'allumait sans rien rendre cliquable : on le
+// refuse, et on dit où aller. Depuis une commune ouverte, il suffit de remonter d'un cran.
+let selMsgT=null;
+function refusSel(){ const m=$("selmsg"); if(!m)return;
+  const t=stack[stack.length-1];
+  m.textContent=t&&t.niveau==="commune"
+    ?"Pour regrouper des communes, remontez au département : les communes ne se sélectionnent que sur sa carte."
+    :"Pour regrouper des communes, ouvrez d'abord un département : les communes ne se sélectionnent que sur sa carte.";
+  m.hidden=false; clearTimeout(selMsgT); selMsgT=setTimeout(()=>{ m.hidden=true; },6000); }
+
 (function(){ const mt=$("multitoggle"); if(!mt)return;
-  mt.onclick=()=>{ multiSel=!multiSel; mt.setAttribute("aria-pressed",String(multiSel));
+  mt.onclick=()=>{ if(!multiSel&&!auNiveauCommunes())return refusSel();
+    clearTimeout(selMsgT); if($("selmsg"))$("selmsg").hidden=true;
+    multiSel=!multiSel; mt.setAttribute("aria-pressed",String(multiSel));
     document.body.classList.toggle("multi",multiSel);
     if(!multiSel){ selCodes.clear(); selParts.clear(); }
     repaintSel(); selBarSync(); };

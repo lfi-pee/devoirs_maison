@@ -36,7 +36,7 @@ le bureau de vote est une maille d'**organisation** du travail militant. La basc
 
 ### Regrouper des communes (et lire une circonscription)
 
-Le bouton **Multi-communes** fait d'un clic sur la carte un ajout à une sélection plutôt
+Le bouton **Regrouper des communes** fait d'un clic sur la carte un ajout à une sélection plutôt
 qu'une descente d'un niveau. La **fiche agrégée** somme alors les voix, les registres et les
 effectifs de la sélection, et recompose les pourcentages pondérés par les inscrit·es. Le
 score des municipales en est retiré (une tête de liste insoumise ici, pas là : le chiffre

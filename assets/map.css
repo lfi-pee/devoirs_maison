@@ -601,6 +601,11 @@
   #selbar button:hover:not(:disabled){border-color:var(--lav)}
   #selbar #selview{background:var(--acc);color:var(--onacc);border-color:var(--acc)}
   #selbar button:disabled{opacity:.4;cursor:default}
+  /* refus du bouton « Regrouper des communes » hors d'un département, à la place de la
+     barre de sélection. */
+  #selmsg{top:calc(var(--top-b) + 8px);left:52px;max-width:420px;padding:7px 11px;z-index:1100;
+       font-size:12px;line-height:1.4;color:var(--warntx);border-color:var(--warnbd)}
+  #selmsg[hidden]{display:none}
   body:not(.adv) #pastilles{display:none}
   body:not(.adv) #subtoggle{display:none!important}
   body:not(.adv) #pastoggle{display:none!important}
@@ -659,6 +664,7 @@
        ligne à partir de 52 px) et sortait de l'écran de 253 px — boutons inatteignables. */
     #selbar{left:8px;right:8px;top:calc(var(--top-b) + 8px);flex-wrap:wrap;gap:6px;padding:8px 10px}
     #selbar #selcount{flex:1 0 100%}
+    #selmsg{left:8px;right:8px;max-width:none;font-size:13px}
     #selbar button,#selbar select{min-height:40px;padding:8px 12px;font-size:13px}
 
     /* légende compacte en bas-gauche, ESCAMOTÉE quand la fiche est ouverte : en
